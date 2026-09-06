@@ -131,6 +131,32 @@ const WoFAvatar = (() => {
           .join(' ');
         return `<path d="${zacken}"/>`;
       }
+      case 'saiyajin': {
+        // Dragonball-artige Stachelfrisur: Zacken-Kranz vom linken über
+        // den oberen Kopfrand bis zum rechten Ohr (Grad 180 -> 360, geht
+        // durch 270 = "oben"), Gesicht/Kinn bleiben frei. Wechselnde
+        // Längen für den typischen chaotisch-dynamischen Anime-Look.
+        const anzahlZacken = 9;
+        const startGrad = 180;
+        const endGrad = 360;
+        const laengenFaktor = [1.9, 1.1, 1.6, 1.0, 2.1, 1.0, 1.6, 1.1, 1.9];
+        let zacken2 = '';
+        for (let i = 0; i < anzahlZacken; i++) {
+          const t = i / (anzahlZacken - 1);
+          const winkel = ((startGrad + t * (endGrad - startGrad)) * Math.PI) / 180;
+          const laenge = r * laengenFaktor[i];
+          const basisR = r - 2;
+          const breite = 0.16;
+          const b1x = cx + Math.cos(winkel - breite) * basisR;
+          const b1y = cy + Math.sin(winkel - breite) * basisR;
+          const b2x = cx + Math.cos(winkel + breite) * basisR;
+          const b2y = cy + Math.sin(winkel + breite) * basisR;
+          const spitzeX = cx + Math.cos(winkel) * (basisR + laenge);
+          const spitzeY = cy + Math.sin(winkel) * (basisR + laenge);
+          zacken2 += `M ${b1x.toFixed(1)} ${b1y.toFixed(1)} L ${spitzeX.toFixed(1)} ${spitzeY.toFixed(1)} L ${b2x.toFixed(1)} ${b2y.toFixed(1)} Z `;
+        }
+        return `<path d="${zacken2}"/>`;
+      }
       default:
         return '';
     }
