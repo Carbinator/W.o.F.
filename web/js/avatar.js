@@ -77,30 +77,43 @@ const WoFAvatar = (() => {
     `;
   }
 
+  // Kurzer Deckhaar-Kappenbogen, liegt komplett oberhalb der Augenlinie
+  // (cy+2) — Basis für alle Frisuren außer "kahl", damit das Gesicht nie
+  // verdeckt wird.
+  function haarKappe(cx, cy, r) {
+    return `<path d="M ${cx - r} ${cy - 2} A ${r} ${r} 0 0 1 ${cx + r} ${cy - 2}
+                    A ${r + 3} ${r + 3} 0 0 0 ${cx - r} ${cy - 2} Z"/>`;
+  }
+
+  // Seitliche Haarsträhnen links/rechts außerhalb des Gesichts (die Augen
+  // sitzen bei cx∓8 — die Strähnen bleiben bei cx∓(r+...), also klar
+  // außerhalb) statt eines Blocks quer übers Gesicht.
+  function haarStraehnen(cx, cy, r, laenge) {
+    return `
+      <rect x="${cx - r - 3}" y="${cy - 4}" width="8" height="${laenge}" rx="4"/>
+      <rect x="${cx + r - 5}" y="${cy - 4}" width="8" height="${laenge}" rx="4"/>
+    `;
+  }
+
   function haarPfad(frisur) {
     const { cx, cy, r } = HEAD;
     switch (frisur) {
       case 'kahl':
         return '';
       case 'kurz':
-        return `<path d="M ${cx - r} ${cy - 2} A ${r} ${r} 0 0 1 ${cx + r} ${cy - 2}
-                        A ${r + 3} ${r + 3} 0 0 0 ${cx - r} ${cy - 2} Z"/>`;
+        return haarKappe(cx, cy, r);
       case 'mittel':
-        return `<path d="M ${cx - r - 2} ${cy + 8} A ${r + 3} ${r + 3} 0 0 1 ${cx + r + 2} ${cy + 8}
-                        L ${cx + r} ${cy - 4} A ${r} ${r} 0 0 0 ${cx - r} ${cy - 4} Z"/>`;
+        return haarKappe(cx, cy, r) + haarStraehnen(cx, cy, r, 28);
       case 'lang':
-        return `<path d="M ${cx - r - 3} ${cy + 46} A ${r + 4} ${r + 4} 0 0 1 ${cx + r + 3} ${cy + 46}
-                        L ${cx + r + 1} ${cy - 6} A ${r + 1} ${r + 1} 0 0 0 ${cx - r - 1} ${cy - 6} Z"/>`;
+        return haarKappe(cx, cy, r) + haarStraehnen(cx, cy, r, 56);
       case 'zopf':
         return `
-          <path d="M ${cx - r} ${cy - 2} A ${r} ${r} 0 0 1 ${cx + r} ${cy - 2}
-                   A ${r + 3} ${r + 3} 0 0 0 ${cx - r} ${cy - 2} Z"/>
+          ${haarKappe(cx, cy, r)}
           <path d="M ${cx} ${cy + r - 2} q 6 14 -2 30 q -6 -2 -4 -16 Z"/>
         `;
       case 'dutt':
         return `
-          <path d="M ${cx - r} ${cy - 2} A ${r} ${r} 0 0 1 ${cx + r} ${cy - 2}
-                   A ${r + 3} ${r + 3} 0 0 0 ${cx - r} ${cy - 2} Z"/>
+          ${haarKappe(cx, cy, r)}
           <circle cx="${cx}" cy="${cy - r - 6}" r="7"/>
         `;
       default:
