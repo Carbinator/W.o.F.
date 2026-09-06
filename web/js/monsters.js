@@ -49,7 +49,7 @@ const WoFMonsters = (() => {
       sprueche: ['Kein Goblin schlägt eine gute Kniebeuge!', 'Beug dich – bevor ER es tut!'],
       stufen: baueStufen(
         'squat_goblin', 'Kniebeugen', 'muskelaufbau',
-        ['Squat Goblin Welpe', 'Squat Goblin Späher', 'Squat Goblin Krieger', 'Squat Goblin Häuptling', 'Squat Goblin Uralt'],
+        ['Squat Goblin', 'Squat Goblin Krieger', 'Squat Goblin Than', 'Squat Goblin Schamane', 'Squat Goblin Häuptling'],
         STANDARD_PROGRESSION
       ),
     },
@@ -62,7 +62,7 @@ const WoFMonsters = (() => {
       sprueche: ['Drück durch, der Dämon guckt zu!', 'Push it, push it real good!'],
       stufen: baueStufen(
         'pusher_demon', 'Liegestütze', 'kraft',
-        ['Pusher Demon Lehrling', 'Pusher Demon Treiber', 'Pusher Demon Peiniger', 'Pusher Demon Folterknecht', 'Pusher Demon Erzdämon'],
+        ['Pusher Dämon', 'Pusher Demon Warrior', 'Pusher Demon Desolator', 'Pusher Demon Devestator', 'Pusher Demon Terminator'],
         PUSHUP_PROGRESSION
       ),
     },
@@ -75,7 +75,7 @@ const WoFMonsters = (() => {
       sprueche: ['Iss keine Dumplings – mach Hampelmänner!', 'Knusprig wird nur, wer durchhält.'],
       stufen: baueStufen(
         'dumplings', 'Hampelmänner', 'muskelaufbau',
-        ['Dumpling-Teigling', 'Dumpling-Knusper', 'Dumpling-Dämpfer', 'Dumpling-Wok-Wächter', 'Dumpling-Kaiser'],
+        ['Dumplings', 'Dumpling Tumbler', 'Dumpling Roller', 'Dumpling Slider', 'Dumpling Avalanche'],
         STANDARD_PROGRESSION
       ),
     },
@@ -88,7 +88,7 @@ const WoFMonsters = (() => {
       sprueche: ['Sei kein Burger – verbrenn ihn mit Crab Walks!', 'Crab Walks schlagen jeden Cheeseburger.'],
       stufen: baueStufen(
         'creatures', 'Crab Walks', 'ausdauer',
-        ['Cheeseburger', 'Doublecheese-Burger', 'Triplecheese-Burger', 'Quadruple-Cheese-Burger', 'Quintuple-Cheese-Burger'],
+        ['Creature', 'Creature Rare', 'Creature Medium-Rare', 'Creature Medium', 'Creature Done'],
         STANDARD_PROGRESSION
       ),
     },
@@ -101,7 +101,7 @@ const WoFMonsters = (() => {
       sprueche: ['Dreh dich, bevor die Schlange zubeißt!', 'Twist it like a Döner-Spieß!'],
       stufen: baueStufen(
         'killer_kebab_snakes', 'Leg Raises', 'beweglichkeit',
-        ['Kebabschlange-Jungtier', 'Kebabschlange-Spießer', 'Kebabschlange-Grillmeister', 'Kebabschlange-Flammenwächter', 'Kebabschlange-Ur-Spieß'],
+        ['Killer Kebab', 'Killer Kebab Worm', 'Killer Kebab Snake', 'Killer Kebab Kobra', 'Killer Kebab Basilisk'],
         STANDARD_PROGRESSION
       ),
     },
@@ -114,7 +114,7 @@ const WoFMonsters = (() => {
       sprueche: ['Sei kein Knödel, mach Crunches!', 'Roll dich zusammen, bevor der Knödel es tut!'],
       stufen: baueStufen(
         'knoedel', 'Standing Arnold Press', 'willenskraft',
-        ['Knödel-Krümel', 'Knödel-Rolle', 'Knödel-Batzen', 'Knödel-Fürst', 'Knödel-Koloss'],
+        ['Knödel Base', 'Knödel Double', 'Knödel Triple', 'Knödel Quad', 'Knödel Pyramide'],
         ARNOLD_PRESS_PROGRESSION
       ),
     },

@@ -288,6 +288,8 @@ Jede Monster-Familie (2 rotierende Sprüche) und jeder Boss (1 Spruch) hat einen
 
 **Wichtig für die Weiterarbeit:** Die aktuellen Sprüche sind nur Platzhalter von Claude. Der User schreibt sich die finalen Sprüche (und ggf. auch Namen) selbst — nicht einfach durch neue KI-Vorschläge ersetzen, sondern auf seine Vorgaben warten.
 
+**Update 2026-09-06:** Die 5 Stufennamen von 6 der 7 Familien (Squat Goblin, Pusher Demon, Dumplings, Burger/"Creature", Killer Kebab Snakes, Knödel) wurden auf User-Vorgabe komplett durch eigene Namen ersetzt (`monsters.js`, `stufen`-Arrays). Plumpi hatte seine Namen (Plumpi/Super-/Ultra-/Mega-/Hyperplumpi) schon vorher vom User. Die Familien-IDs/-Anzeigenamen/Übungen/Sprüche blieben unverändert — nur die einzelnen Stufennamen. Gleiches Prinzip wie bei den Sprüchen: nicht durch KI-Vorschläge ersetzen.
+
 ## 7. Karten-System
 
 ### 7.1 Leaflet + OSM
