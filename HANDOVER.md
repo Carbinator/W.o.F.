@@ -8,7 +8,7 @@
 
 **Fertig & automatisiert getestet** (Playwright, 50+ Checks, 0 offene Fehler, 0 JS-Exceptions):
 - Kompletter Charakter-Flow: Erstellung, Bearbeiten, SVG-Avatar (4 Klassen × Geschlecht × Körperbau × 6 Hauttöne × 10 Haarfarben × 6 Frisuren)
-- Alle 6 Monster-Familien (je 5 Stufen) + alle 16 Bosse — eigenes Hand-SVG-Design pro Familie/Boss, eigener Kampfspruch (siehe 6.6)
+- Alle 8 Monster-Familien (je 5 Stufen) + alle 16 Bosse — eigenes Hand-SVG-Design pro Familie/Boss, eigener Kampfspruch (siehe 6.6)
 - Streetfighter-Kampf-Overlay (VS-Intro, Combo-System, K.O.-Sequenz, Sound-Effekte), inkl. Fliehen und direktem Neustart danach
 - Belohnungssystem: XP/Gold/Loot/Überperformance-Bonus, Talente (3 Äste × 3 Stufen/Klasse, Effekte geprüft), Streak + Grace-Tage, Boss-Cooldowns
 - Energie-System + 4 Verbrauchsgüter (Erschöpfung ohne Kampf-Niederlage, siehe 5.7)
@@ -137,7 +137,7 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 ### 5.2 Häufig-Spawner-Familien
 
-**✅ Umgesetzt, 7 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde auf User-Wunsch zu "Burger" umbenannt/umgestaltet, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
+**✅ Umgesetzt, 8 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde auf User-Wunsch zu "Burger" umbenannt/umgestaltet, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
 
 | Familie | Übung | Bonus-Stat |
 |---|---|---|
@@ -148,14 +148,17 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 | Killer Kebab Snakes | Leg Raises | beweglichkeit |
 | Knödel | Standing Arnold Press | willenskraft |
 | Plumpi | Split Squats | kraft |
+| Pastatoren | Auf der Stelle springen | ausdauer |
 
 **Übungen-Update (2026-09-06):** Auf User-Rückmeldung ("die Übungen sind blöd... wir brauchen Übungen, die man überall ausführen kann") wurden Sit-Ups, Burpees und Russian Twists ersetzt — alles Übungen, die Bodenkontakt/Hinlegen brauchen und für unterwegs unpraktisch sind. Standing Arnold Press hat eine eigene Rep-Progression (10→20→40→100→200 statt Standard 5→10→20→50→100, User-Vorgabe "10 in der ersten Stufe").
 
 **Plumpi (7. Familie, Ergänzung 2026-09-06):** Die ursprüngliche "Creatures"-Familie (lila amorpher Blob mit Tentakel-Armen und großem Auge) wurde beim Burger-Umbau aus Versehen mit-ersetzt. Der User wollte das Design behalten ("zu goldig um den verkommen zu lassen") — jetzt als eigenständige 7. Familie "Plumpi" (Stufen: Plumpi → Superplumpi → Ultraplumpi → Megaplumpi → Hyperplumpi) mit dem unveränderten Original-SVG.
 
-Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Burger: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi noch leer, der User schreibt eigene.
+**Pastatoren (8. Familie, Ergänzung 2026-09-06, komplett User-Idee):** Übung "Auf der Stelle springen", eigene Rep-Progression 10→20→50→100→200 (User-Vorgabe für die ersten drei Stufen, Rest in gleicher Verdopplungslogik fortgeführt). Die 5 Stufen sind Pasta-Formen mit jeweils eigener Silhouette statt nur Farb-/Größenwechsel: Spagetti (dünner Strich-Körper) → Linguino (flaches Band) → Fussiliator (Korkenzieher-Spirale) → Riga Toni (geriffelte Röhre + Ritter-Helmkamm) → Band Nudel (breite Robe + Papst-Mitra).
 
-**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahme:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
+Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Burger: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe; Pastatoren: komplett andere Silhouette pro Stufe statt nur Farbe/Größe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi und Pastatoren noch leer, der User schreibt eigene.
+
+**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahmen:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50), Standing Arnold Press und Auf-der-Stelle-Springen starten bei 10 statt 5 (10 → 20 → 40/50 → 100 → 200). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
 ### 5.3 Einzigartige Bosse mit Cooldowns
 

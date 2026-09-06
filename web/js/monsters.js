@@ -1,8 +1,8 @@
 /**
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
- * 7 Familien: Squat Goblin, Pusher Demon, Dumplings, Burger, Killer
- * Kebab Snakes, Knödel, Plumpi. Übungen sind auf User-Wunsch (2026-09-06)
+ * 8 Familien: Squat Goblin, Pusher Demon, Dumplings, Burger, Killer
+ * Kebab Snakes, Knödel, Plumpi, Pastatoren. Übungen sind auf User-Wunsch (2026-09-06)
  * durchgehend auf "überall ausführbar" umgestellt — keine Boden-/
  * Liege-Übungen mehr außer Liegestütze. Klimmzüge bleiben draußen,
  * Ersatz ist Split Squats (siehe 11.2) — jetzt Plumpis Übung.
@@ -16,6 +16,10 @@ const WoFMonsters = (() => {
   // Standing Arnold Press (User-Vorgabe: "10 in der ersten Stufe" statt
   // Standard-5) — doppelte Standard-Progression, gleiche Eskalationsform.
   const ARNOLD_PRESS_PROGRESSION = [10, 20, 40, 100, 200];
+  // Auf-der-Stelle-Springen für Pastatoren (User-Vorgabe: "10, 20, 50"
+  // für die ersten drei Stufen) — Stufe 4/5 in gleicher Verdopplungslogik
+  // wie die Standard-Progression fortgeführt (...50 -> 100 -> 200).
+  const JUMPING_PROGRESSION = [10, 20, 50, 100, 200];
 
   // Eigene Annahme (im HANDOVER nicht spezifiziert): Basiswerte pro Stufe,
   // gleich über alle Familien — Belohnung hängt an der Monster-Stufe
@@ -129,6 +133,19 @@ const WoFMonsters = (() => {
         'plumpi', 'Split Squats', 'kraft',
         ['Plumpi', 'Superplumpi', 'Ultraplumpi', 'Megaplumpi', 'Hyperplumpi'],
         STANDARD_PROGRESSION
+      ),
+    },
+    pastatoren: {
+      id: 'pastatoren',
+      name: 'Pastatoren',
+      uebung: 'Auf der Stelle springen',
+      einheit: 'reps',
+      bonusStat: 'ausdauer',
+      sprueche: [],
+      stufen: baueStufen(
+        'pastatoren', 'Auf der Stelle springen', 'ausdauer',
+        ['Spagetti', 'Linguino', 'Fussiliator', 'Riga Toni', 'Band Nudel'],
+        JUMPING_PROGRESSION
       ),
     },
   };
@@ -653,6 +670,125 @@ const WoFMonsters = (() => {
     `;
   }
 
+  // Pastatoren (8. Familie, User-Wunsch 2026-09-06): 5 Pasta-Formen als
+  // Eskalationsstufen, jede mit eigener Silhouette statt nur Farbe/Größe
+  // — dünner Spaghetti-Strich-Körper -> flaches Linguine-Band -> verdrehter
+  // Fusilli-Korkenzieher -> geriffelter Rigatoni-"Ritter" (mit Helmkamm)
+  // -> breite Bandnudel-"Papst"-Robe mit Mitra. Kopf/Augen bleiben über
+  // alle Stufen gleich, nur der "Körper" wechselt die Form.
+  function renderPastator(stufe) {
+    const idx = stufe - 1;
+    const g = groesseFuer(stufe);
+    const namen = FAMILIEN.pastatoren.stufen;
+    const cx = 80;
+    const cy = 120;
+    const nudelFarben = ['#f0d888', '#e8c868', '#dcb048', '#c89838', '#a87828'];
+    const nudelFarbe = nudelFarben[idx];
+    const sosseFarbe = '#c0301a';
+
+    const kopfHtml = `
+      <circle cx="${cx}" cy="${cy - 50 * g}" r="${14 * g}" fill="${nudelFarbe}"/>
+      <circle cx="${(cx - 4 * g).toFixed(1)}" cy="${(cy - 51 * g).toFixed(1)}" r="${1.6 * g}" fill="#14100c"/>
+      <circle cx="${(cx + 4 * g).toFixed(1)}" cy="${(cy - 51 * g).toFixed(1)}" r="${1.6 * g}" fill="#14100c"/>
+    `;
+
+    let koerperHtml = '';
+    let extraHtml = '';
+
+    if (stufe === 1) {
+      // Spagetti: dünner Strich-Körper ("Stick-Man").
+      koerperHtml = `
+        <g stroke="${nudelFarbe}" stroke-width="${3 * g}" stroke-linecap="round" fill="none">
+          <path d="M ${cx} ${cy - 38 * g} L ${cx} ${cy + 10 * g}"/>
+          <path d="M ${cx} ${cy + 10 * g} L ${(cx - 16 * g).toFixed(1)} ${(cy + 50 * g).toFixed(1)}"/>
+          <path d="M ${cx} ${cy + 10 * g} L ${(cx + 16 * g).toFixed(1)} ${(cy + 50 * g).toFixed(1)}"/>
+          <path d="M ${cx} ${(cy - 20 * g).toFixed(1)} L ${(cx - 22 * g).toFixed(1)} ${(cy + 6 * g).toFixed(1)}"/>
+          <path d="M ${cx} ${(cy - 20 * g).toFixed(1)} L ${(cx + 22 * g).toFixed(1)} ${(cy + 6 * g).toFixed(1)}"/>
+        </g>
+      `;
+    } else if (stufe === 2) {
+      // Linguino: gleiche Pose, aber als flaches Band ("Broad Stick-Man").
+      koerperHtml = `
+        <g fill="${nudelFarbe}">
+          <path d="M ${(cx - 4 * g).toFixed(1)} ${(cy - 38 * g).toFixed(1)} L ${(cx + 4 * g).toFixed(1)} ${(cy - 38 * g).toFixed(1)}
+                   L ${(cx + 4 * g).toFixed(1)} ${(cy + 10 * g).toFixed(1)} L ${(cx - 4 * g).toFixed(1)} ${(cy + 10 * g).toFixed(1)} Z"/>
+          <path d="M ${(cx - 4 * g).toFixed(1)} ${(cy + 6 * g).toFixed(1)} L ${(cx - 20 * g).toFixed(1)} ${(cy + 50 * g).toFixed(1)}
+                   L ${(cx - 12 * g).toFixed(1)} ${(cy + 50 * g).toFixed(1)} L ${(cx + 2 * g).toFixed(1)} ${(cy + 10 * g).toFixed(1)} Z"/>
+          <path d="M ${(cx + 4 * g).toFixed(1)} ${(cy + 6 * g).toFixed(1)} L ${(cx + 20 * g).toFixed(1)} ${(cy + 50 * g).toFixed(1)}
+                   L ${(cx + 12 * g).toFixed(1)} ${(cy + 50 * g).toFixed(1)} L ${(cx - 2 * g).toFixed(1)} ${(cy + 10 * g).toFixed(1)} Z"/>
+          <path d="M ${(cx - 3 * g).toFixed(1)} ${(cy - 20 * g).toFixed(1)} L ${(cx - 24 * g).toFixed(1)} ${(cy + 4 * g).toFixed(1)}
+                   L ${(cx - 18 * g).toFixed(1)} ${(cy + 8 * g).toFixed(1)} L ${(cx + 1 * g).toFixed(1)} ${(cy - 16 * g).toFixed(1)} Z"/>
+          <path d="M ${(cx + 3 * g).toFixed(1)} ${(cy - 20 * g).toFixed(1)} L ${(cx + 24 * g).toFixed(1)} ${(cy + 4 * g).toFixed(1)}
+                   L ${(cx + 18 * g).toFixed(1)} ${(cy + 8 * g).toFixed(1)} L ${(cx - 1 * g).toFixed(1)} ${(cy - 16 * g).toFixed(1)} Z"/>
+        </g>
+      `;
+    } else if (stufe === 3) {
+      // Fussiliator: Korkenzieher-Körper aus wechselnden S-Kurven.
+      const segmente = 5;
+      let spirale = '';
+      for (let i = 0; i < segmente; i++) {
+        const y0 = cy - 40 * g + i * 18 * g;
+        const y1 = y0 + 18 * g;
+        const richtung = i % 2 === 0 ? 1 : -1;
+        spirale += `<path d="M ${cx} ${y0.toFixed(1)} Q ${(cx + richtung * 22 * g).toFixed(1)} ${((y0 + y1) / 2).toFixed(1)} ${cx} ${y1.toFixed(1)}"
+                          stroke="${nudelFarbe}" stroke-width="${7 * g}" fill="none" stroke-linecap="round"/>`;
+      }
+      koerperHtml = `
+        <g>
+          ${spirale}
+          <path d="M ${cx} ${(cy + 50 * g).toFixed(1)} L ${(cx - 14 * g).toFixed(1)} ${(cy + 66 * g).toFixed(1)}" stroke="${nudelFarbe}" stroke-width="${6 * g}" stroke-linecap="round"/>
+          <path d="M ${cx} ${(cy + 50 * g).toFixed(1)} L ${(cx + 14 * g).toFixed(1)} ${(cy + 66 * g).toFixed(1)}" stroke="${nudelFarbe}" stroke-width="${6 * g}" stroke-linecap="round"/>
+        </g>
+      `;
+    } else if (stufe === 4) {
+      // Riga Toni: geriffelte Röhre (Rigatoni-Rillen) als Rüstung + Ritter-Helmkamm.
+      const rohrBreite = 26 * g;
+      const rohrOben = cy - 40 * g;
+      const rohrUnten = cy + 40 * g;
+      let riffel = '';
+      const anzahlRiffel = 6;
+      for (let i = 0; i <= anzahlRiffel; i++) {
+        const y = rohrOben + (i * (rohrUnten - rohrOben)) / anzahlRiffel;
+        riffel += `<line x1="${(cx - rohrBreite).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(cx + rohrBreite).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#8a6828" stroke-width="${1.6 * g}"/>`;
+      }
+      koerperHtml = `
+        <g fill="${nudelFarbe}">
+          <rect x="${(cx - rohrBreite).toFixed(1)}" y="${rohrOben.toFixed(1)}" width="${(rohrBreite * 2).toFixed(1)}" height="${(rohrUnten - rohrOben).toFixed(1)}" rx="${8 * g}"/>
+          <rect x="${(cx - 8 * g).toFixed(1)}" y="${rohrUnten.toFixed(1)}" width="${(16 * g).toFixed(1)}" height="${(20 * g).toFixed(1)}"/>
+          <path d="M ${(cx - rohrBreite - 4 * g).toFixed(1)} ${(rohrOben + 10 * g).toFixed(1)} L ${(cx - rohrBreite - 16 * g).toFixed(1)} ${(rohrOben + 4 * g).toFixed(1)} L ${(cx - rohrBreite).toFixed(1)} ${(rohrOben + 24 * g).toFixed(1)} Z"/>
+          <path d="M ${(cx + rohrBreite + 4 * g).toFixed(1)} ${(rohrOben + 10 * g).toFixed(1)} L ${(cx + rohrBreite + 16 * g).toFixed(1)} ${(rohrOben + 4 * g).toFixed(1)} L ${(cx + rohrBreite).toFixed(1)} ${(rohrOben + 24 * g).toFixed(1)} Z"/>
+        </g>
+        ${riffel}
+      `;
+      extraHtml = `<path d="M ${(cx - 6 * g).toFixed(1)} ${(cy - 62 * g).toFixed(1)} L ${cx} ${(cy - 76 * g).toFixed(1)} L ${(cx + 6 * g).toFixed(1)} ${(cy - 62 * g).toFixed(1)} Z" fill="${sosseFarbe}"/>`;
+    } else {
+      // Band Nudel: breite fließende Bandnudel-Robe + Papst-Mitra.
+      const robeOben = cy - 30 * g;
+      const robeUnten = cy + 70 * g;
+      koerperHtml = `
+        <path d="M ${(cx - 12 * g).toFixed(1)} ${robeOben.toFixed(1)}
+                 Q ${(cx - 50 * g).toFixed(1)} ${((robeOben + robeUnten) / 2).toFixed(1)} ${(cx - 38 * g).toFixed(1)} ${robeUnten.toFixed(1)}
+                 L ${(cx + 38 * g).toFixed(1)} ${robeUnten.toFixed(1)}
+                 Q ${(cx + 50 * g).toFixed(1)} ${((robeOben + robeUnten) / 2).toFixed(1)} ${(cx + 12 * g).toFixed(1)} ${robeOben.toFixed(1)} Z"
+              fill="${nudelFarbe}"/>
+        <path d="M ${(cx - 38 * g).toFixed(1)} ${(robeUnten - 6 * g).toFixed(1)} L ${(cx + 38 * g).toFixed(1)} ${(robeUnten - 6 * g).toFixed(1)}" stroke="${sosseFarbe}" stroke-width="${4 * g}"/>
+      `;
+      extraHtml = `
+        <path d="M ${(cx - 10 * g).toFixed(1)} ${(cy - 58 * g).toFixed(1)} L ${cx} ${(cy - 80 * g).toFixed(1)} L ${(cx + 10 * g).toFixed(1)} ${(cy - 58 * g).toFixed(1)}
+                 Q ${cx} ${(cy - 66 * g).toFixed(1)} ${(cx - 10 * g).toFixed(1)} ${(cy - 58 * g).toFixed(1)} Z" fill="${nudelFarbe}" stroke="${sosseFarbe}" stroke-width="1.5"/>
+        <path d="M ${(cx - 2 * g).toFixed(1)} ${(cy - 78 * g).toFixed(1)} L ${(cx + 2 * g).toFixed(1)} ${(cy - 78 * g).toFixed(1)} L ${cx} ${(cy - 86 * g).toFixed(1)} Z" fill="${sosseFarbe}"/>
+      `;
+    }
+
+    return `
+      <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
+        ${koerperHtml}
+        ${kopfHtml}
+        ${extraHtml}
+      </svg>
+    `;
+  }
+
   const RENDERER = {
     squat_goblin: renderSquatGoblin,
     pusher_demon: renderPusherDemon,
@@ -661,6 +797,7 @@ const WoFMonsters = (() => {
     killer_kebab_snakes: renderKebabSnake,
     knoedel: renderKnoedel,
     plumpi: renderPlumpi,
+    pastatoren: renderPastator,
   };
 
   function renderMonsterSVG(familyId, stufe) {
