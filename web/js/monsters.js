@@ -340,11 +340,16 @@ const WoFMonsters = (() => {
     `;
   }
 
-  // Dreistöckiger Knödel-Turm (Kopf/Torso/Basis wie ein Schneemann), mit
-  // Kürbis-artigem Fratzengesicht, Pfeffer-/Kräuterflecken-Textur per
-  // Glanz-Gradient und Teigfäusten — Versuch einer deutlich aufwändigeren
-  // Hand-SVG-Illustration (Vorlage: User-Referenzbild "K-AI vs Knödel").
-  // Bleibt Vektor/flach; ersetzt keine echte gemalte Illustration.
+  // Knödel-Pyramide: pro Stufe genau eine Knödel-Kugel mehr (Stufe 1 = 1
+  // Knödel, Stufe 5 = 5 Knödel), gestapelt zu einem kleinen Turm/Pyramide
+  // unterhalb der Kopf-Kugel — auf Wunsch des Users, nachdem "mehr Stufe
+  // = mehr Knödel" naheliegender war als bloß Größe/Farbe zu ändern.
+  // Kürbis-artiges Fratzengesicht + Teigfäuste nur am Kopf, Pfeffer-/
+  // Kräuterflecken-Textur per Glanz-Gradient auf allen Kugeln. Bleibt
+  // Vektor/flach (Vorlage war ein gemaltes Referenzbild, siehe Kommentar
+  // in der Commit-Historie) — kein Ersatz für echte Illustrationen.
+  const KNOEDEL_REIHEN_PRO_STUFE = { 1: [], 2: [1], 3: [2], 4: [3], 5: [1, 3] };
+
   function renderKnoedel(stufe) {
     const farben = ['#f0ead8', '#e8dcc0', '#dcd0ac', '#c8a878', '#a8845a'];
     const namen = FAMILIEN.knoedel.stufen;
@@ -352,28 +357,53 @@ const WoFMonsters = (() => {
     const farbe = farben[idx];
     const g = groesseFuer(stufe);
     const cx = 80;
-    const kopfCy = 66;
-    const kopfR = 28 * g;
-    const torsoCy = 118;
-    const torsoR = 34 * g;
-    const basisCy = 176;
-    const basisR = 40 * g;
+    const ballR = 24 * g;
     const gradientId = `knoedelGlanz${idx}`;
 
-    let pfefferPunkte = '';
-    for (let i = 0; i < 6; i++) {
-      const winkel = (i / 6) * Math.PI * 2;
-      const px = cx + Math.cos(winkel) * torsoR * 0.55;
-      const py = torsoCy + Math.sin(winkel) * torsoR * 0.4;
-      pfefferPunkte += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${2.2 * g}" fill="#5a4028"/>`;
+    // Kopf bei relativer y=0 planen, weitere Knödel-Reihen darunter
+    // staffeln (leichte Überlappung, damit sie wie aneinandergepresst/
+    // aufgetürmt wirken statt lose zu schweben).
+    let kopfCy = 0;
+    let laufendeCy = kopfCy;
+    const reihen = [];
+    (KNOEDEL_REIHEN_PRO_STUFE[stufe] || []).forEach((anzahl) => {
+      laufendeCy += ballR * 1.7;
+      const breite = (anzahl - 1) * ballR * 1.7;
+      const startX = cx - breite / 2;
+      const xs = [];
+      for (let i = 0; i < anzahl; i++) xs.push(startX + i * ballR * 1.7);
+      reihen.push({ cy: laufendeCy, xs });
+    });
+
+    // Vertikal zentrieren, damit alle Stufen ungefähr gleich viel vom
+    // Canvas füllen statt Stufe 1 winzig oben schweben zu lassen.
+    const inhaltOben = kopfCy - ballR - 34;
+    const inhaltUnten = (reihen.length ? reihen[reihen.length - 1].cy : kopfCy) + ballR + 16;
+    const versatz = 120 - (inhaltOben + inhaltUnten) / 2;
+    kopfCy += versatz;
+    reihen.forEach((r) => { r.cy += versatz; });
+
+    function texturPunkte(ballCx, ballCy, ballIdx) {
+      const farbePunkt = ballIdx % 2 === 0 ? '#5a4028' : '#7a9a4a';
+      let out = '';
+      for (let i = 0; i < 3; i++) {
+        const winkel = (i / 3) * Math.PI * 2 + ballIdx;
+        const px = ballCx + Math.cos(winkel) * ballR * 0.5;
+        const py = ballCy + Math.sin(winkel) * ballR * 0.4;
+        out += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${2 * g}" fill="${farbePunkt}"/>`;
+      }
+      return out;
     }
-    let kraeuterFlecken = '';
-    for (let i = 0; i < 5; i++) {
-      const winkel = (i / 5) * Math.PI * 2 + 0.3;
-      const px = cx + Math.cos(winkel) * basisR * 0.6;
-      const py = basisCy + Math.sin(winkel) * basisR * 0.35;
-      kraeuterFlecken += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${3.4 * g}" fill="#7a9a4a"/>`;
-    }
+
+    let extraKnoedel = '';
+    let ballIdx = 0;
+    reihen.forEach((reihe) => {
+      reihe.xs.forEach((x) => {
+        extraKnoedel += `<circle cx="${x.toFixed(1)}" cy="${reihe.cy.toFixed(1)}" r="${ballR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>`;
+        extraKnoedel += texturPunkte(x, reihe.cy, ballIdx);
+        ballIdx += 1;
+      });
+    });
 
     return `
       <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
@@ -384,25 +414,20 @@ const WoFMonsters = (() => {
             <stop offset="100%" stop-color="#8a7048"/>
           </radialGradient>
         </defs>
-        <!-- Dampf -->
+        <!-- Dampf über dem Kopf -->
         <g stroke="#cfead0" stroke-width="${2.4 * g}" fill="none" opacity="0.75">
-          <path d="M ${cx - 15 * g} ${kopfCy - kopfR - 4} Q ${cx - 21 * g} ${kopfCy - kopfR - 18} ${cx - 13 * g} ${kopfCy - kopfR - 32}"/>
-          <path d="M ${cx + 15 * g} ${kopfCy - kopfR - 4} Q ${cx + 21 * g} ${kopfCy - kopfR - 18} ${cx + 13 * g} ${kopfCy - kopfR - 32}"/>
+          <path d="M ${cx - 15 * g} ${kopfCy - ballR - 4} Q ${cx - 21 * g} ${kopfCy - ballR - 18} ${cx - 13 * g} ${kopfCy - ballR - 32}"/>
+          <path d="M ${cx + 15 * g} ${kopfCy - ballR - 4} Q ${cx + 21 * g} ${kopfCy - ballR - 18} ${cx + 13 * g} ${kopfCy - ballR - 32}"/>
         </g>
-        <!-- Teigfäuste -->
+        <!-- Teigfäuste am Kopf -->
         <g fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1">
-          <ellipse cx="${cx - basisR - 4 * g}" cy="${torsoCy + 8 * g}" rx="${13 * g}" ry="${15 * g}" transform="rotate(-25 ${cx - basisR - 4 * g} ${torsoCy + 8 * g})"/>
-          <ellipse cx="${cx + basisR + 4 * g}" cy="${torsoCy + 8 * g}" rx="${13 * g}" ry="${15 * g}" transform="rotate(25 ${cx + basisR + 4 * g} ${torsoCy + 8 * g})"/>
+          <ellipse cx="${cx - ballR - 10 * g}" cy="${kopfCy + 6 * g}" rx="${13 * g}" ry="${15 * g}" transform="rotate(-25 ${cx - ballR - 10 * g} ${kopfCy + 6 * g})"/>
+          <ellipse cx="${cx + ballR + 10 * g}" cy="${kopfCy + 6 * g}" rx="${13 * g}" ry="${15 * g}" transform="rotate(25 ${cx + ballR + 10 * g} ${kopfCy + 6 * g})"/>
         </g>
-        <!-- Basis (unten, größte Kugel) mit Kräuterflecken -->
-        <circle cx="${cx}" cy="${basisCy}" r="${basisR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
-        ${kraeuterFlecken}
-        <!-- Torso (Mitte) mit Pfefferpunkten -->
-        <circle cx="${cx}" cy="${torsoCy}" r="${torsoR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
-        ${pfefferPunkte}
-        <!-- Kopf -->
-        <circle cx="${cx}" cy="${kopfCy}" r="${kopfR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
-        <!-- Böse Kürbis-Fratze -->
+        <!-- Weitere Knödel (eine Kugel mehr pro Stufe) -->
+        ${extraKnoedel}
+        <!-- Kopf-Knödel mit Fratze -->
+        <circle cx="${cx}" cy="${kopfCy}" r="${ballR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
         <g fill="#2a1a0a">
           <path d="M ${cx - 14 * g} ${kopfCy - 6 * g} L ${cx - 4 * g} ${kopfCy - 2 * g} L ${cx - 14 * g} ${kopfCy + 2 * g} Z"/>
           <path d="M ${cx + 14 * g} ${kopfCy - 6 * g} L ${cx + 4 * g} ${kopfCy - 2 * g} L ${cx + 14 * g} ${kopfCy + 2 * g} Z"/>
