@@ -1,0 +1,29 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#241c12"/>
+      <stop offset="100%" stop-color="#0a0806"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0d888"/>
+      <stop offset="50%" stop-color="#d4a44a"/>
+      <stop offset="100%" stop-color="#a87a28"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="228" fill="none" stroke="url(#gold)" stroke-width="14"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#7a5a20" stroke-width="3" opacity="0.6"/>
+
+  <text x="256" y="330" font-family="Georgia, 'Times New Roman', serif" font-weight="700"
+        font-size="260" text-anchor="middle" fill="url(#gold)" stroke="#5a3e10" stroke-width="3">W</text>
+
+  <!-- Kleine Hantel als Fitness-Signal unter dem Buchstaben -->
+  <rect x="176" y="386" width="160" height="12" rx="6" fill="url(#gold)"/>
+  <g fill="url(#gold)">
+    <rect x="160" y="374" width="20" height="36" rx="4"/>
+    <rect x="332" y="374" width="20" height="36" rx="4"/>
+    <rect x="146" y="380" width="14" height="24" rx="3"/>
+    <rect x="352" y="380" width="14" height="24" rx="3"/>
+  </g>
+</svg>

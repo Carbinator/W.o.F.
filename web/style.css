@@ -14,6 +14,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -22,6 +23,17 @@ html, body {
   height: 100%;
   background: radial-gradient(ellipse at top, var(--bg-panel), var(--bg-dark));
   color: var(--text);
+  /* WebView-Kompatibilität (Punkt 15 Schritt 15): kein Pull-to-Refresh/
+     Bounce-Scrolling, App fühlt sich nativer an statt wie eine Webseite. */
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+input, textarea, select {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 h1, h2, h3 {
@@ -45,6 +57,10 @@ h1, h2, h3 {
   align-items: center;
   justify-content: space-between;
   padding: 0.6rem 1rem;
+  /* Safe-Area für Notch (viewport-fit=cover, Punkt 15 Schritt 15) */
+  padding-top: max(0.6rem, env(safe-area-inset-top));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
   border-bottom: 1px solid var(--gold);
   background: var(--bg-panel);
 }
@@ -258,6 +274,7 @@ h1, h2, h3 {
 
 #settings-bar {
   padding: 0.5rem 1rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   background: var(--bg-panel);
   border-top: 1px solid var(--gold);
   font-size: 0.9rem;
@@ -854,4 +871,33 @@ h1, h2, h3 {
   50% { transform: scale(0.9); opacity: 1; }
   70% { transform: scale(1.15); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* ---- Schmale Handy-Bildschirme (Punkt 15 Schritt 15: WebView-Kompatibilität) ---- */
+
+@media (max-width: 480px) {
+  #app-header {
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
+  }
+
+  .nav-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  #view-held {
+    flex-direction: column;
+  }
+
+  #held-avatar {
+    flex: 0 0 auto;
+    width: 160px;
+    margin: 0 auto;
+  }
+
+  .held-list li {
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+  }
 }
