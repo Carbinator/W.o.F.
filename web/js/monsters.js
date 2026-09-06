@@ -1,13 +1,11 @@
 /**
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
- * 6 Familien (Punkt 15 Schritt 12): Squat Goblin, Pusher Demon, Dumplings,
- * Burger, Killer Kebab Snakes, Knödel. Die Übungen waren im HANDOVER
- * mit "evtl." vorgeschlagen — hier übernommen, da thematisch stimmig
- * (Punkt 5.2 explizit: "Übung/Namen bitte thematisch stimmig zuordnen").
- * Die offenen Fragen aus Punkt 11 sind geklärt: Battering Ram ist nur
- * noch ein Boss (siehe 11.1), Klimmzüge bleiben draußen, Ersatz ist
- * Split Squats (siehe 11.2) — beides betrifft keine dieser Familien.
+ * 7 Familien: Squat Goblin, Pusher Demon, Dumplings, Burger, Killer
+ * Kebab Snakes, Knödel, Plumpi. Übungen sind auf User-Wunsch (2026-09-06)
+ * durchgehend auf "überall ausführbar" umgestellt — keine Boden-/
+ * Liege-Übungen mehr außer Liegestütze. Klimmzüge bleiben draußen,
+ * Ersatz ist Split Squats (siehe 11.2) — jetzt Plumpis Übung.
  */
 
 const WoFMonsters = (() => {
@@ -15,6 +13,9 @@ const WoFMonsters = (() => {
   // Ausnahme Push-Ups (schwerer): 5->10->20->35->50.
   const STANDARD_PROGRESSION = [5, 10, 20, 50, 100];
   const PUSHUP_PROGRESSION = [5, 10, 20, 35, 50];
+  // Standing Arnold Press (User-Vorgabe: "10 in der ersten Stufe" statt
+  // Standard-5) — doppelte Standard-Progression, gleiche Eskalationsform.
+  const ARNOLD_PRESS_PROGRESSION = [10, 20, 40, 100, 200];
 
   // Eigene Annahme (im HANDOVER nicht spezifiziert): Basiswerte pro Stufe,
   // gleich über alle Familien — Belohnung hängt an der Monster-Stufe
@@ -68,12 +69,12 @@ const WoFMonsters = (() => {
     dumplings: {
       id: 'dumplings',
       name: 'Dumplings',
-      uebung: 'Sit-Ups',
+      uebung: 'Hampelmänner',
       einheit: 'reps',
       bonusStat: 'muskelaufbau',
-      sprueche: ['Iss keine Dumplings – mach Sit-Ups!', 'Knusprig wird nur, wer durchhält.'],
+      sprueche: ['Iss keine Dumplings – mach Hampelmänner!', 'Knusprig wird nur, wer durchhält.'],
       stufen: baueStufen(
-        'dumplings', 'Sit-Ups', 'muskelaufbau',
+        'dumplings', 'Hampelmänner', 'muskelaufbau',
         ['Dumpling-Teigling', 'Dumpling-Knusper', 'Dumpling-Dämpfer', 'Dumpling-Wok-Wächter', 'Dumpling-Kaiser'],
         STANDARD_PROGRESSION
       ),
@@ -81,12 +82,12 @@ const WoFMonsters = (() => {
     creatures: {
       id: 'creatures',
       name: 'Burger',
-      uebung: 'Burpees',
+      uebung: 'Crab Walks',
       einheit: 'reps',
       bonusStat: 'ausdauer',
-      sprueche: ['Sei kein Burger – verbrenn ihn mit Burpees!', 'Burpees schlagen jeden Cheeseburger.'],
+      sprueche: ['Sei kein Burger – verbrenn ihn mit Crab Walks!', 'Crab Walks schlagen jeden Cheeseburger.'],
       stufen: baueStufen(
-        'creatures', 'Burpees', 'ausdauer',
+        'creatures', 'Crab Walks', 'ausdauer',
         ['Cheeseburger', 'Doublecheese-Burger', 'Triplecheese-Burger', 'Quadruple-Cheese-Burger', 'Quintuple-Cheese-Burger'],
         STANDARD_PROGRESSION
       ),
@@ -94,12 +95,12 @@ const WoFMonsters = (() => {
     killer_kebab_snakes: {
       id: 'killer_kebab_snakes',
       name: 'Killer Kebab Snakes',
-      uebung: 'Russian Twists',
+      uebung: 'Leg Raises',
       einheit: 'reps',
       bonusStat: 'beweglichkeit',
       sprueche: ['Dreh dich, bevor die Schlange zubeißt!', 'Twist it like a Döner-Spieß!'],
       stufen: baueStufen(
-        'killer_kebab_snakes', 'Russian Twists', 'beweglichkeit',
+        'killer_kebab_snakes', 'Leg Raises', 'beweglichkeit',
         ['Kebabschlange-Jungtier', 'Kebabschlange-Spießer', 'Kebabschlange-Grillmeister', 'Kebabschlange-Flammenwächter', 'Kebabschlange-Ur-Spieß'],
         STANDARD_PROGRESSION
       ),
@@ -107,13 +108,26 @@ const WoFMonsters = (() => {
     knoedel: {
       id: 'knoedel',
       name: 'Knödel',
-      uebung: 'Hollow Body Rocks',
+      uebung: 'Standing Arnold Press',
       einheit: 'reps',
       bonusStat: 'willenskraft',
       sprueche: ['Sei kein Knödel, mach Crunches!', 'Roll dich zusammen, bevor der Knödel es tut!'],
       stufen: baueStufen(
-        'knoedel', 'Hollow Body Rocks', 'willenskraft',
+        'knoedel', 'Standing Arnold Press', 'willenskraft',
         ['Knödel-Krümel', 'Knödel-Rolle', 'Knödel-Batzen', 'Knödel-Fürst', 'Knödel-Koloss'],
+        ARNOLD_PRESS_PROGRESSION
+      ),
+    },
+    plumpi: {
+      id: 'plumpi',
+      name: 'Plumpi',
+      uebung: 'Split Squats',
+      einheit: 'reps',
+      bonusStat: 'kraft',
+      sprueche: [],
+      stufen: baueStufen(
+        'plumpi', 'Split Squats', 'kraft',
+        ['Plumpi', 'Superplumpi', 'Ultraplumpi', 'Megaplumpi', 'Hyperplumpi'],
         STANDARD_PROGRESSION
       ),
     },
@@ -579,6 +593,43 @@ const WoFMonsters = (() => {
     `;
   }
 
+  // Plumpi: die "alte Kreatur" (ursprünglich unter "creatures" laufend,
+  // bevor die Familie zu Burger umgestaltet wurde) — zu goldig zum
+  // Verschrotten, jetzt als eigene 7. Familie wiederbelebt. Amorpher
+  // lila Blob mit Tentakel-Armen und großem Auge, unverändert vom
+  // Original-Design übernommen.
+  function renderPlumpi(stufe) {
+    const farben = ['#5a3a8a', '#6a2a9a', '#7a1aa8', '#8a10b0', '#a008c0'];
+    const namen = FAMILIEN.plumpi.stufen;
+    const idx = stufe - 1;
+    const farbe = farben[idx];
+    const g = groesseFuer(stufe);
+    const cx = 80;
+    const cy = 120;
+
+    return `
+      <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
+        <g fill="${farbe}">
+          <!-- Tentakel -->
+          <path d="M ${cx - 30 * g} ${cy + 10 * g} Q ${cx - 55 * g} ${cy + 30 * g} ${cx - 40 * g} ${cy + 60 * g}
+                   Q ${cx - 34 * g} ${cy + 40 * g} ${cx - 20 * g} ${cy + 20 * g} Z"/>
+          <path d="M ${cx + 30 * g} ${cy + 10 * g} Q ${cx + 55 * g} ${cy + 30 * g} ${cx + 40 * g} ${cy + 60 * g}
+                   Q ${cx + 34 * g} ${cy + 40 * g} ${cx + 20 * g} ${cy + 20 * g} Z"/>
+          <!-- Blob-Körper (unregelmäßig) -->
+          <path d="M ${cx} ${cy - 46 * g}
+                   Q ${cx + 42 * g} ${cy - 40 * g} ${cx + 38 * g} ${cy + 10 * g}
+                   Q ${cx + 34 * g} ${cy + 48 * g} ${cx} ${cy + 46 * g}
+                   Q ${cx - 34 * g} ${cy + 48 * g} ${cx - 38 * g} ${cy + 10 * g}
+                   Q ${cx - 42 * g} ${cy - 40 * g} ${cx} ${cy - 46 * g} Z"/>
+        </g>
+        <!-- Großes Auge -->
+        <circle cx="${cx}" cy="${cy - 4 * g}" r="${16 * g}" fill="#e8f0d0"/>
+        <circle cx="${cx}" cy="${cy - 4 * g}" r="${8 * g}" fill="#14100c"/>
+        <circle cx="${cx + 3 * g}" cy="${cy - 7 * g}" r="${2.5 * g}" fill="#fff"/>
+      </svg>
+    `;
+  }
+
   const RENDERER = {
     squat_goblin: renderSquatGoblin,
     pusher_demon: renderPusherDemon,
@@ -586,6 +637,7 @@ const WoFMonsters = (() => {
     creatures: renderCreature,
     killer_kebab_snakes: renderKebabSnake,
     knoedel: renderKnoedel,
+    plumpi: renderPlumpi,
   };
 
   function renderMonsterSVG(familyId, stufe) {

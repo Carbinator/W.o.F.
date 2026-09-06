@@ -137,18 +137,23 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 ### 5.2 Häufig-Spawner-Familien
 
-**✅ Umgesetzt** (Stand nach mehreren Iterationen — "Creatures" wurde auf User-Wunsch zu "Burger" umbenannt/umgestaltet, siehe `monsters.js`):
+**✅ Umgesetzt, 7 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde auf User-Wunsch zu "Burger" umbenannt/umgestaltet, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
 
 | Familie | Übung | Bonus-Stat |
 |---|---|---|
 | Squat Goblin | Kniebeugen | muskelaufbau |
 | Pusher Demon | Liegestütze | kraft |
-| Dumplings | Sit-Ups | muskelaufbau |
-| Burger (intern weiterhin familyId `creatures`) | Burpees | ausdauer |
-| Killer Kebab Snakes | Russian Twists | beweglichkeit |
-| Knödel | Hollow Body Rocks | willenskraft |
+| Dumplings | Hampelmänner | muskelaufbau |
+| Burger (intern weiterhin familyId `creatures`) | Crab Walks | ausdauer |
+| Killer Kebab Snakes | Leg Raises | beweglichkeit |
+| Knödel | Standing Arnold Press | willenskraft |
+| Plumpi | Split Squats | kraft |
 
-Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Burger: mehr Patties/Belag pro Stufe; Knödel: eine Kugel mehr pro Stufe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6).
+**Übungen-Update (2026-09-06):** Auf User-Rückmeldung ("die Übungen sind blöd... wir brauchen Übungen, die man überall ausführen kann") wurden Sit-Ups, Burpees und Russian Twists ersetzt — alles Übungen, die Bodenkontakt/Hinlegen brauchen und für unterwegs unpraktisch sind. Standing Arnold Press hat eine eigene Rep-Progression (10→20→40→100→200 statt Standard 5→10→20→50→100, User-Vorgabe "10 in der ersten Stufe").
+
+**Plumpi (7. Familie, Ergänzung 2026-09-06):** Die ursprüngliche "Creatures"-Familie (lila amorpher Blob mit Tentakel-Armen und großem Auge) wurde beim Burger-Umbau aus Versehen mit-ersetzt. Der User wollte das Design behalten ("zu goldig um den verkommen zu lassen") — jetzt als eigenständige 7. Familie "Plumpi" (Stufen: Plumpi → Superplumpi → Ultraplumpi → Megaplumpi → Hyperplumpi) mit dem unveränderten Original-SVG.
+
+Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Burger: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi noch leer, der User schreibt eigene.
 
 **Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahme:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
