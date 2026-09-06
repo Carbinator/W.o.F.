@@ -45,6 +45,7 @@ const WoFMonsters = (() => {
       uebung: 'Kniebeugen',
       einheit: 'reps',
       bonusStat: 'muskelaufbau',
+      sprueche: ['Kein Goblin schlägt eine gute Kniebeuge!', 'Beug dich – bevor ER es tut!'],
       stufen: baueStufen(
         'squat_goblin', 'Kniebeugen', 'muskelaufbau',
         ['Squat Goblin Welpe', 'Squat Goblin Späher', 'Squat Goblin Krieger', 'Squat Goblin Häuptling', 'Squat Goblin Uralt'],
@@ -57,6 +58,7 @@ const WoFMonsters = (() => {
       uebung: 'Liegestütze',
       einheit: 'reps',
       bonusStat: 'kraft',
+      sprueche: ['Drück durch, der Dämon guckt zu!', 'Push it, push it real good!'],
       stufen: baueStufen(
         'pusher_demon', 'Liegestütze', 'kraft',
         ['Pusher Demon Lehrling', 'Pusher Demon Treiber', 'Pusher Demon Peiniger', 'Pusher Demon Folterknecht', 'Pusher Demon Erzdämon'],
@@ -69,6 +71,7 @@ const WoFMonsters = (() => {
       uebung: 'Sit-Ups',
       einheit: 'reps',
       bonusStat: 'muskelaufbau',
+      sprueche: ['Iss keine Dumplings – mach Sit-Ups!', 'Knusprig wird nur, wer durchhält.'],
       stufen: baueStufen(
         'dumplings', 'Sit-Ups', 'muskelaufbau',
         ['Dumpling-Teigling', 'Dumpling-Knusper', 'Dumpling-Dämpfer', 'Dumpling-Wok-Wächter', 'Dumpling-Kaiser'],
@@ -81,6 +84,7 @@ const WoFMonsters = (() => {
       uebung: 'Burpees',
       einheit: 'reps',
       bonusStat: 'ausdauer',
+      sprueche: ['Sei kein Burger – verbrenn ihn mit Burpees!', 'Burpees schlagen jeden Cheeseburger.'],
       stufen: baueStufen(
         'creatures', 'Burpees', 'ausdauer',
         ['Burger-Krümel', 'Cheeseburger', 'Doppel-Patty', 'Feuer-Burger', 'Burger-Koloss'],
@@ -93,6 +97,7 @@ const WoFMonsters = (() => {
       uebung: 'Russian Twists',
       einheit: 'reps',
       bonusStat: 'beweglichkeit',
+      sprueche: ['Dreh dich, bevor die Schlange zubeißt!', 'Twist it like a Döner-Spieß!'],
       stufen: baueStufen(
         'killer_kebab_snakes', 'Russian Twists', 'beweglichkeit',
         ['Kebabschlange-Jungtier', 'Kebabschlange-Spießer', 'Kebabschlange-Grillmeister', 'Kebabschlange-Flammenwächter', 'Kebabschlange-Ur-Spieß'],
@@ -105,6 +110,7 @@ const WoFMonsters = (() => {
       uebung: 'Hollow Body Rocks',
       einheit: 'reps',
       bonusStat: 'willenskraft',
+      sprueche: ['Sei kein Knödel, mach Crunches!', 'Roll dich zusammen, bevor der Knödel es tut!'],
       stufen: baueStufen(
         'knoedel', 'Hollow Body Rocks', 'willenskraft',
         ['Knödel-Krümel', 'Knödel-Rolle', 'Knödel-Batzen', 'Knödel-Fürst', 'Knödel-Koloss'],
@@ -112,6 +118,14 @@ const WoFMonsters = (() => {
       ),
     },
   };
+
+  // Zufälligen Kampfspruch für Popup beim Kampfstart auswählen (Punkt
+  // 6.2-Ergänzung, User-Wunsch: "Sei kein Knödel, mach Crunches"). Von
+  // combat.js sowohl für Mob- als auch Boss-Kämpfe genutzt (siehe bosses.js).
+  function zufallsSpruch(sprueche) {
+    if (!sprueche || sprueche.length === 0) return null;
+    return sprueche[Math.floor(Math.random() * sprueche.length)];
+  }
 
   function monsterDaten(familyId, stufe) {
     const familie = FAMILIEN[familyId];
@@ -545,5 +559,6 @@ const WoFMonsters = (() => {
     zufallsFamilie,
     zufallsStufe,
     renderMonsterSVG,
+    zufallsSpruch,
   };
 })();

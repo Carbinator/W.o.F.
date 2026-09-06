@@ -597,6 +597,13 @@ h1, h2, h3 {
   max-width: 140px;
 }
 
+.combat-spruch {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin: -0.3rem 0 0.4rem;
+}
+
 .combat-vs {
   font-family: 'Cinzel', serif;
   color: var(--danger);

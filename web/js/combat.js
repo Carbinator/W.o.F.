@@ -296,6 +296,7 @@ const WoFCombat = (() => {
     el('combat-monster-name').textContent = monster.name;
     el('combat-monster-svg').innerHTML = WoFMonsters.renderMonsterSVG(monster.familyId, monster.stufe);
     el('combat-phase-indicator').classList.add('hidden');
+    zeigeSpruch(WoFMonsters.zufallsSpruch(WoFMonsters.FAMILIEN[monster.familyId].sprueche));
     oeffneKampfModal(character, monster.name);
   }
 
@@ -322,7 +323,14 @@ const WoFCombat = (() => {
     el('combat-monster-svg').innerHTML = WoFBosses.renderBossSVG(boss.id);
     aktualisierePhaseIndikator();
     el('combat-phase-indicator').classList.remove('hidden');
+    zeigeSpruch(WoFMonsters.zufallsSpruch(boss.sprueche));
     oeffneKampfModal(character, boss.name);
+  }
+
+  function zeigeSpruch(spruch) {
+    const spruchEl = el('combat-spruch');
+    spruchEl.textContent = spruch || '';
+    spruchEl.classList.toggle('hidden', !spruch);
   }
 
   function oeffneKampfModal(character, gegnerName) {

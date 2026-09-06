@@ -32,53 +32,65 @@ const WoFBosses = (() => {
     // ---- Kleine Bosse (12h Cooldown) ----------------------------------
     cornpop: {
       id: 'cornpop', name: 'Cornpop', tier: 'klein', ...TIER_BASIS.klein, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Knack ihn, bevor er knackt!'],
       phasen: [phase('Jumping Jacks', 20, 'ausdauer'), phase('Squat Jumps', 15, 'muskelaufbau')],
     },
     marsh_the_mallow: {
       id: 'marsh_the_mallow', name: 'Marsh the Mallow', tier: 'klein', ...TIER_BASIS.klein, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Weich von außen, hart im Nehmen!'],
       phasen: [phase('Rolling Sit-Ups', 20, 'muskelaufbau'), phase('Hollow Body Hold', 20, 'willenskraft', 'sekunden')],
     },
     pan_doro: {
       id: 'pan_doro', name: 'Pan Doro', tier: 'klein', ...TIER_BASIS.klein, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Süßer Sieg wartet nicht von allein.'],
       phasen: [phase('Tiefe Squats', 20, 'kraft'), phase('Wall Sit', 25, 'willenskraft', 'sekunden')],
     },
     pasta_busta: {
       id: 'pasta_busta', name: 'Pasta Busta', tier: 'klein', ...TIER_BASIS.klein, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Al dente schlägt durchgekocht.'],
       phasen: [phase('Sprints (High Knees)', 25, 'ausdauer'), phase('Burpees', 12, 'ausdauer')],
     },
     nutcruncher: {
       id: 'nutcruncher', name: 'Nutcruncher', tier: 'klein', ...TIER_BASIS.klein, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Beiß dich durch, nicht er dich!'],
       phasen: [phase('Punches', 30, 'kraft'), phase('Mountain Climbers', 20, 'ausdauer')],
     },
 
     // ---- Mittlere Bosse (24h Cooldown) ---------------------------------
     fleur_the_flourduster: {
       id: 'fleur_the_flourduster', name: 'Fleur the Flourduster', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Staub sie ein, bevor sie dich einstaubt!'],
       phasen: [phase('High Knees', 30, 'ausdauer'), phase('Burpees', 15, 'ausdauer')],
     },
     daemoniz: {
       id: 'daemoniz', name: 'Deniz / Daemoniz', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Kein Grund zur Panik – nur zum Plank!'],
       phasen: [phase('Superman Hold', 25, 'willenskraft', 'sekunden'), phase('Hollow Body Hold', 25, 'willenskraft', 'sekunden')],
     },
     nightshade_the_carbmaid: {
       id: 'nightshade_the_carbmaid', name: 'Nightshade the Carbmaid', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Low Carb, High Effort.'],
       phasen: [phase('Plank', 30, 'willenskraft', 'sekunden'), phase('Side Plank', 20, 'willenskraft', 'sekunden')],
     },
     chap_the_fruit_monk: {
       id: 'chap_the_fruit_monk', name: 'Chap the Fruit Monk', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Erleuchtung kommt nach dem Burpee.'],
       phasen: [phase('Burpees', 15, 'ausdauer'), phase('Mountain Climbers', 25, 'ausdauer')],
     },
     jack_the_2nd_fruit_monk: {
       id: 'jack_the_2nd_fruit_monk', name: 'Jack the 2nd Fruit Monk', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Zweiter Mönch, gleiche Regel: durchziehen.'],
       phasen: [phase('Heavy Squats', 25, 'kraft'), phase('Lunges', 20, 'kraft')],
     },
     le_tofu_bunnay: {
       id: 'le_tofu_bunnay', name: 'Le Tofu Bunnay', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
+      sprueche: ['Zart wie Tofu, hart im Sprung.'],
       phasen: [phase('Jump Squats', 20, 'muskelaufbau'), phase('High Knees', 25, 'ausdauer')],
     },
     battering_ram: {
       id: 'battering_ram', name: 'Battering Ram', tier: 'mittel', ...TIER_BASIS.mittel, minCharLevel: MIN_CHAR_LEVEL,
       flavorText: 'Zuckerdiamant-Zähne, Wächter des Buttercup Palace — kalorienfrei, aber zäh.',
+      sprueche: ['Kalorienfrei, aber zäh — häng dich rein.'],
       phasen: [phase('Sprint-Intervalle (High Knees)', 25, 'ausdauer'), phase('Push-Ups', 20, 'kraft')],
     },
 
@@ -86,21 +98,25 @@ const WoFBosses = (() => {
     sugarking_kane: {
       id: 'sugarking_kane', name: 'Sugarking Kane', tier: 'gross', ...TIER_BASIS.gross, minCharLevel: MIN_CHAR_LEVEL,
       flavorText: 'Kalorienbombe erlegt — Carbinator hätte sich hier den ganzen Tag gestärkt.',
+      sprueche: ['Der Zuckerthron wackelt.'],
       phasen: [phase('Squats', 30, 'muskelaufbau'), phase('Push-Ups', 25, 'kraft'), phase('Plank', 40, 'willenskraft', 'sekunden')],
     },
     vee_gain_le_fay: {
       id: 'vee_gain_le_fay', name: 'Vee Gain Le Fay / Firestorm', tier: 'gross', ...TIER_BASIS.gross, minCharLevel: MIN_CHAR_LEVEL,
       flavorText: 'Acht Beine, null Zucker mehr übrig — Carbinator nickt anerkennend.',
+      sprueche: ['Acht Beine, ein Ziel: dein Sieg.'],
       phasen: [phase('Mountain Climbers', 30, 'ausdauer'), phase('Bear Crawls', 20, 'beweglichkeit'), phase('Plank', 35, 'willenskraft', 'sekunden')],
     },
     ed_the_fat: {
       id: 'ed_the_fat', name: 'Ed the Fat', tier: 'gross', ...TIER_BASIS.gross, minCharLevel: MIN_CHAR_LEVEL,
       flavorText: 'Ein Marathon gegen das Fett-Wesen — kalorienreich, aber besiegt.',
+      sprueche: ['Der Marathon beginnt jetzt.'],
       phasen: [phase('Jumping Jacks', 35, 'ausdauer'), phase('High Knees', 35, 'ausdauer'), phase('Burpees', 20, 'ausdauer')],
     },
     zuckerhydra: {
       id: 'zuckerhydra', name: 'Zuckerhydra', tier: 'gross', ...TIER_BASIS.gross, minCharLevel: MIN_CHAR_LEVEL,
       flavorText: 'Jeder Kopf ein Zuckerschock — alle drei liegen flach.',
+      sprueche: ['Schlag einen Kopf nach dem anderen ab.'],
       // HIIT-Modus (Punkt 8): Sensor-basierte Bewegungserkennung optional
       // zuschaltbar (Schritt 14, siehe sensor.js). Manueller Rep-Counter
       // bleibt parallel immer nutzbar.
