@@ -49,8 +49,8 @@ const WoFMap = (() => {
     return 2 * R * Math.asin(Math.sqrt(h));
   }
 
-  function goblinIcon(stufe) {
-    const svg = WoFMonsters.renderMonsterSVG('squat_goblin', stufe);
+  function monsterIcon(familyId, stufe) {
+    const svg = WoFMonsters.renderMonsterSVG(familyId, stufe);
     return L.divIcon({
       className: 'monster-marker',
       html: `<div class="monster-marker-inner">${svg}</div>`,
@@ -64,13 +64,14 @@ const WoFMap = (() => {
     const offset = zufallsOffset(SPAWN_RADIUS_M, playerPos.lat);
     const lat = playerPos.lat + offset.lat;
     const lng = playerPos.lng + offset.lng;
+    const familyId = WoFMonsters.zufallsFamilie();
     const stufe = WoFMonsters.zufallsStufe(character.level);
     const id = WoFState.cryptoId();
 
-    const marker = L.marker([lat, lng], { icon: goblinIcon(stufe) }).addTo(map);
+    const marker = L.marker([lat, lng], { icon: monsterIcon(familyId, stufe) }).addTo(map);
     marker.on('click', () => versucheKampf(id));
 
-    monster.push({ id, familyId: 'squat_goblin', stufe, lat, lng, marker });
+    monster.push({ id, familyId, stufe, lat, lng, marker });
   }
 
   function fuelleSpawns() {
