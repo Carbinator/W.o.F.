@@ -87,7 +87,7 @@ const WoFMonsters = (() => {
       sprueche: ['Sei kein Burger – verbrenn ihn mit Burpees!', 'Burpees schlagen jeden Cheeseburger.'],
       stufen: baueStufen(
         'creatures', 'Burpees', 'ausdauer',
-        ['Burger-Krümel', 'Cheeseburger', 'Doppel-Patty', 'Feuer-Burger', 'Burger-Koloss'],
+        ['Cheeseburger', 'Doublecheese-Burger', 'Triplecheese-Burger', 'Quadruple-Cheese-Burger', 'Quintuple-Cheese-Burger'],
         STANDARD_PROGRESSION
       ),
     },
@@ -295,9 +295,10 @@ const WoFMonsters = (() => {
   // Burger", danach präzisiert: krabbenartiges Wesen mit acht
   // Gliedmaßen — internes familyId "creatures"/Übung/Bonus-Stat bleiben
   // unverändert). Größe = Anzahl Patties = Stufe (1 Patty bei Stufe 1,
-  // 5 Patties bei Stufe 5). Belag wächst zusätzlich mit der Stufe: ab
-  // Stufe 2 Käse, ab 3 Salat, ab 4 Tomate, ab 5 Flammen — Soße ist
-  // immer dabei (das "Kreatur"-Element, wie Sabber/Schleim).
+  // 5 Patties bei Stufe 5), JEDES Patty hat seine eigene Käsescheibe
+  // (Cheeseburger -> Doublecheese -> ... -> Quintuple-Cheese, User-
+  // Wunsch). Zusätzlicher Belag wächst mit der Stufe: ab 3 Salat, ab 4
+  // Tomate, ab 5 Flammen — Soße ist immer dabei (das "Kreatur"-Element).
   function renderCreature(stufe) {
     const idx = stufe - 1;
     const g = groesseFuer(stufe);
@@ -305,7 +306,6 @@ const WoFMonsters = (() => {
     const cx = 80;
 
     const pattyAnzahl = stufe;
-    const hatKaese = stufe >= 2;
     const hatSalat = stufe >= 3;
     const hatTomate = stufe >= 4;
     const hatFlamme = stufe >= 5;
@@ -360,17 +360,25 @@ const WoFMonsters = (() => {
                                 Q ${(cx + breite * 0.3).toFixed(1)} ${(oberBunCy + 2 * g).toFixed(1)} ${(cx + breite * 0.7).toFixed(1)} ${(oberBunCy - 6 * g).toFixed(1)}"
                                 stroke="#c0301a" stroke-width="${2.4 * g}" fill="none" stroke-linecap="round"/>`;
 
+    // Jedes Patty bekommt seine eigene Käsescheibe obendrauf (Cheeseburger
+    // -> Doublecheese -> Triplecheese -> ... — auf Wunsch des Users "fünf
+    // Pattys mit Käse", nicht nur eine einzelne Scheibe oben auf dem Stapel).
+    function kaeseFuerPatty(py) {
+      return `<path d="M ${cx - breite + 2 * g} ${py - pattyDicke}
+                      Q ${cx - breite * 0.4} ${py - pattyDicke + 8 * g} ${cx - breite * 0.1} ${py - pattyDicke}
+                      Q ${cx + breite * 0.3} ${py - pattyDicke + 7 * g} ${cx + breite - 2 * g} ${py - pattyDicke}
+                      L ${cx + breite - 2 * g} ${py - pattyDicke - 6 * g}
+                      L ${cx - breite + 2 * g} ${py - pattyDicke - 6 * g} Z" fill="#f0c020"/>`;
+    }
+
     const pattySchichten = pattyCys
       .map((py) => `<ellipse cx="${cx}" cy="${py}" rx="${breite - 3 * g}" ry="${pattyDicke}" fill="${pattyFarbe}"/>`)
       .join('');
-
-    const kaeseHtml = hatKaese
-      ? `<path d="M ${cx - breite + 2 * g} ${pattyStartCy - pattyDicke}
-                 Q ${cx - breite * 0.4} ${pattyStartCy - pattyDicke + 10 * g} ${cx - breite * 0.1} ${pattyStartCy - pattyDicke}
-                 Q ${cx + breite * 0.3} ${pattyStartCy - pattyDicke + 9 * g} ${cx + breite - 2 * g} ${pattyStartCy - pattyDicke}
-                 L ${cx + breite - 2 * g} ${pattyStartCy - pattyDicke - 8 * g}
-                 L ${cx - breite + 2 * g} ${pattyStartCy - pattyDicke - 8 * g} Z" fill="#f0c020"/>`
-      : '';
+    // Käse wird GANZ ZULETZT gezeichnet (siehe Aufbau unten) — sonst
+    // verschwindet die oberste Scheibe unterm oberen Brötchen, weil das
+    // sonst als letztes über sie gemalt würde. So liegt der Käse sichtbar
+    // über dem Bun-Rand, wie geschmolzener Käse an einem echten Burger.
+    const kaeseSchichten = pattyCys.map((py) => kaeseFuerPatty(py)).join('');
 
     const salatCy = oberBunCy + 8 * g;
     const salatHtml = hatSalat
@@ -408,14 +416,15 @@ const WoFMonsters = (() => {
         ${gliedmassen}
         <!-- Unteres Brötchen -->
         <ellipse cx="${cx}" cy="${unterBunCy}" rx="${breite}" ry="${9 * g}" fill="${bunFarbe}"/>
-        <!-- Patty(s), Tomate, Käse, Salat -->
+        <!-- Patty(s), Tomate, Salat -->
         ${pattySchichten}
         ${tomateHtml}
-        ${kaeseHtml}
         ${salatHtml}
-        <!-- Oberes Brötchen (Kuppel) mit Sesam + Soße -->
+        <!-- Oberes Brötchen (Kuppel) mit Sesam -->
         <ellipse cx="${cx}" cy="${oberBunCy}" rx="${breite - 2 * g}" ry="${13 * g}" fill="${bunFarbe}"/>
         ${sesam}
+        <!-- Käse zuletzt: liegt sichtbar über dem Bun-Rand -->
+        ${kaeseSchichten}
         ${soesseHtml}
         <!-- Böses Gesicht auf dem obersten Patty -->
         <g fill="#f0d840">
