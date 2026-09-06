@@ -153,14 +153,34 @@ const WoFState = (() => {
     if (!raw) return null;
     try {
       const character = JSON.parse(raw);
+      let migriert = false;
+
       // Migration: Spielstände von vor dem Skilltree (Punkt 15 Schritt 11)
       // hatten noch kein talente-Feld.
       if (!character.talente) {
         character.talente = { angriffslust: 0, bestaendigkeit: 0, beute: 0 };
+        migriert = true;
       }
       if (!character.bossCooldowns) {
         character.bossCooldowns = {};
+        migriert = true;
       }
+      // Migration: Spielstände von vor dem Energie-System.
+      if (character.energie === undefined) {
+        character.energie = 100;
+        character.letzteEnergieAktualisierung = new Date().toISOString();
+        character.consumables = { eiweissshake: 0, omega3: 0, kreatin: 0, swoley_shake: 0 };
+        character.buffs = {
+          xpBonus: { kaempfeUebrig: 0, prozent: 0 },
+          statBonus: { kaempfeUebrig: 0, prozent: 0 },
+        };
+        migriert = true;
+      }
+
+      // Migrierte Felder sofort zurückschreiben — sonst stehen sie nur im
+      // Arbeitsspeicher, bis irgendeine andere Aktion ohnehin speichert.
+      if (migriert) speichern(character);
+
       return character;
     } catch (e) {
       console.error('WoF: Spielstand konnte nicht gelesen werden', e);
@@ -226,6 +246,17 @@ const WoFState = (() => {
       streak: { count: 0, lastTrainingDate: null },
       besiegteMonster: [],
       bossCooldowns: {},
+
+      // Energie-System (Punkt 5.5-Erweiterung): sinkt durchs Trainieren,
+      // regeneriert über echte Zeit. Kein Blocker fürs Weiterspielen —
+      // nur ein leichter XP-Malus bei niedrigem Stand (siehe combat.js).
+      energie: 100,
+      letzteEnergieAktualisierung: new Date().toISOString(),
+      consumables: { eiweissshake: 0, omega3: 0, kreatin: 0, swoley_shake: 0 },
+      buffs: {
+        xpBonus: { kaempfeUebrig: 0, prozent: 0 },
+        statBonus: { kaempfeUebrig: 0, prozent: 0 },
+      },
 
       erstelltAm: new Date().toISOString(),
     };
@@ -296,6 +327,52 @@ const WoFState = (() => {
   function statErhoehen(character, stat, betrag) {
     if (!STATS.includes(stat)) return;
     character.stats[stat] = (character.stats[stat] || 0) + betrag;
+  }
+
+  // ---- Energie-System (eigene Erweiterung, siehe Punkt 5.5) --------------
+  // "Erschöpfung" nach echtem Training: Energie sinkt beim Kämpfen/
+  // Trainieren, regeneriert passiv über echte Zeit (kein Kampf-Nachteil,
+  // nur ein sanfter XP-Malus bei niedrigem Stand — passend zur bewussten
+  // Entscheidung gegen Boss-Gegenangriffe/Niederlagen aus Punkt 6.5).
+
+  const ENERGIE_MAX = 100;
+  const ENERGIE_REGEN_PRO_STUNDE = 5;
+  const ENERGIE_SCHWELLE_MALUS = 30;
+
+  // Muss vor JEDER Energie-Anzeige/-Verwendung aufgerufen werden, damit
+  // seit dem letzten Öffnen der App vergangene Zeit gutgeschrieben wird.
+  function aktualisiereEnergiePassiv(character) {
+    const jetzt = Date.now();
+    const letzte = new Date(character.letzteEnergieAktualisierung).getTime();
+    const vergangeneStunden = Math.max(0, (jetzt - letzte) / (1000 * 60 * 60));
+    if (vergangeneStunden <= 0) return;
+    character.energie = Math.min(ENERGIE_MAX, character.energie + vergangeneStunden * ENERGIE_REGEN_PRO_STUNDE);
+    character.letzteEnergieAktualisierung = new Date().toISOString();
+  }
+
+  function energieAendern(character, betrag) {
+    character.energie = Math.max(0, Math.min(ENERGIE_MAX, character.energie + betrag));
+  }
+
+  function energieMalusAktiv(character) {
+    return character.energie < ENERGIE_SCHWELLE_MALUS;
+  }
+
+  // Nach jedem abgeschlossenen Kampf (Mob oder ganzer Boss) aufrufen:
+  // zieht die verbrauchte Energie ab und zählt aktive Buffs einen Kampf runter.
+  function energieFuerKampfVerbrauchen(character, repZiel) {
+    const kosten = Math.max(2, Math.floor(repZiel / 10));
+    energieAendern(character, -kosten);
+  }
+
+  function buffsNachKampfAktualisieren(character) {
+    ['xpBonus', 'statBonus'].forEach((key) => {
+      const buff = character.buffs[key];
+      if (buff.kaempfeUebrig > 0) {
+        buff.kaempfeUebrig -= 1;
+        if (buff.kaempfeUebrig === 0) buff.prozent = 0;
+      }
+    });
   }
 
   // ---- Streak (Punkt 5.6) -----------------------------------------------
@@ -379,5 +456,12 @@ const WoFState = (() => {
     talentbaumFuer,
     talentAusgeben,
     berechneTalentBoni,
+    ENERGIE_MAX,
+    ENERGIE_SCHWELLE_MALUS,
+    aktualisiereEnergiePassiv,
+    energieAendern,
+    energieMalusAktiv,
+    energieFuerKampfVerbrauchen,
+    buffsNachKampfAktualisieren,
   };
 })();

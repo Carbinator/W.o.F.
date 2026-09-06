@@ -450,6 +450,26 @@ h1, h2, h3 {
   background: var(--gold);
 }
 
+.energie-bar {
+  width: 100%;
+  height: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--success);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0.4rem 0;
+}
+
+.energie-fill {
+  height: 100%;
+  background: var(--success);
+  transition: width 0.3s ease-out;
+}
+
+.energie-fill.niedrig {
+  background: var(--danger);
+}
+
 .held-list {
   list-style: none;
   padding: 0;
@@ -463,8 +483,14 @@ h1, h2, h3 {
   gap: 0.6rem;
   padding: 0.25rem 0;
   border-bottom: 1px solid #241c12;
-  text-transform: capitalize;
   flex-wrap: wrap;
+}
+
+/* Nur die Stat-Namen (kraft, muskelaufbau, ...) sind kleingeschrieben und
+   brauchen die Großschreibung — bei ganzen Sätzen (z.B. Consumable-
+   Beschreibungen) würde "capitalize" jedes Wort großschreiben. */
+#held-stats li {
+  text-transform: capitalize;
 }
 
 .held-list li button {

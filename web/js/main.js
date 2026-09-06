@@ -210,6 +210,7 @@
 
   function renderHeldTab() {
     if (!character) return;
+    WoFState.aktualisiereEnergiePassiv(character);
     const klasse = WoFState.KLASSEN[character.klasse];
 
     el('held-avatar').innerHTML = WoFAvatar.renderAvatarSVG(character);
@@ -222,6 +223,23 @@
     el('held-level-xp-text').textContent =
       `${character.xp} / ${bedarf} XP · Streak: ${character.streak.count} Tag(e) · 👑 ${bosseBesiegt} Boss(e) besiegt`;
     el('held-gold').textContent = `💰 ${character.gold} Gold · 🌳 ${character.talentPunkte} Talentpunkt(e)`;
+
+    const energieProzent = Math.round(character.energie);
+    el('held-energie-fill').style.width = `${energieProzent}%`;
+    el('held-energie-fill').classList.toggle('niedrig', WoFState.energieMalusAktiv(character));
+    el('held-energie-text').textContent = WoFState.energieMalusAktiv(character)
+      ? `${energieProzent} / 100 — erschöpft, -20% XP bis zur Erholung (🥤 Eiweißshake hilft sofort)`
+      : `${energieProzent} / 100`;
+
+    const buffTexte = [];
+    if (character.buffs.xpBonus.kaempfeUebrig > 0) {
+      buffTexte.push(`🐟 +${character.buffs.xpBonus.prozent}% XP (noch ${character.buffs.xpBonus.kaempfeUebrig} Kämpfe)`);
+    }
+    if (character.buffs.statBonus.kaempfeUebrig > 0) {
+      buffTexte.push(`💊 +${character.buffs.statBonus.prozent}% Stat-Zuwachs (noch ${character.buffs.statBonus.kaempfeUebrig} Kämpfe)`);
+    }
+    el('held-buffs').classList.toggle('hidden', buffTexte.length === 0);
+    el('held-buffs').textContent = buffTexte.join(' · ');
 
     const effektiv = WoFState.effektiveStats(character);
     el('held-stats').innerHTML = WoFState.STATS.map(
@@ -263,6 +281,28 @@
         WoFState.ausruesten(character, btn.dataset.id);
         WoFState.speichern(character);
         renderHeldTab();
+      });
+    });
+
+    const consumablesListe = Object.entries(character.consumables)
+      .filter(([, anzahl]) => anzahl > 0)
+      .map(([id, anzahl]) => {
+        const s = WoFConsumables.SUPPLEMENTE[id];
+        return `
+          <li>
+            <span>${s.emoji} ${s.name} × ${anzahl}</span>
+            <span>${s.beschreibung}</span>
+            <button class="btn-secondary verwenden-btn" data-id="${id}">Verwenden</button>
+          </li>`;
+      })
+      .join('');
+    el('held-consumables').innerHTML = consumablesListe || '<li>Keine Vorräte</li>';
+    el('held-consumables').querySelectorAll('.verwenden-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ergebnis = WoFConsumables.verbrauchen(character, btn.dataset.id);
+        WoFState.speichern(character);
+        renderHeldTab();
+        if (ergebnis) alert(ergebnis);
       });
     });
   }

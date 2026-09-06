@@ -36,10 +36,18 @@ const WoFCombat = (() => {
   // synchron gehalten werden muss.
   function gemeinsameMultiplikatoren(character) {
     const talentBoni = WoFState.berechneTalentBoni(character);
+    WoFState.aktualisiereEnergiePassiv(character);
+    // Energie-System (eigene Erweiterung): niedriger Stand -> sanfter
+    // XP-Malus, NIE ein Blocker fürs Weiterspielen. Omega-3/Kreatin-Buffs
+    // wirken hier direkt mit rein.
+    const energieMultiplikator = WoFState.energieMalusAktiv(character) ? 0.8 : 1.0;
+    const xpBuffMultiplikator = 1 + (character.buffs.xpBonus.prozent || 0) / 100;
+    const statBuffMultiplikator = 1 + (character.buffs.statBonus.prozent || 0) / 100;
     return {
       talentBoni,
-      talentMultiplikator: 1 + talentBoni.combatXpBonus, // Talent-Ast "Angriffslust" (Punkt 4.6)
+      talentMultiplikator: (1 + talentBoni.combatXpBonus) * energieMultiplikator * xpBuffMultiplikator, // Talent-Ast "Angriffslust" (Punkt 4.6)
       streakMultiplikator: 1 + Math.min(character.streak.count, 20) * 0.02,
+      statBuffMultiplikator,
     };
   }
 
@@ -113,6 +121,17 @@ const WoFCombat = (() => {
     return generiereItem(RARITAETEN[rarityIndex], stufeProxy);
   }
 
+  // Konkrete, sportlich-realistische Item-Namen statt generischer
+  // Platzhalter ("Rüstungsteil"/"Waffe"/"Amulett") — auf Wunsch des
+  // Users. Betrifft nur zufällig gedroppten Loot; die Klassen-
+  // Startausrüstung (Punkt 4.5, z.B. "Wildling-Fell") bleibt als
+  // gesetzte Klassen-Identität unangetastet.
+  const LOOT_NAMEN = {
+    armor: ['Trainingsjacke', 'Kompressions-Shirt', 'Lauf-Leggings', 'Sport-Weste', 'Thermo-Unterhemd'],
+    weapon: ['Sportschuhe', 'Springseil', 'Trainingshandschuhe', 'Griffbänder', 'Sprintschuhe'],
+    amulet: ['Schweißband', 'Fitness-Tracker', 'Trinkflasche', 'Handtuch', 'Halsband mit Kompass'],
+  };
+
   function generiereItem(rarity, stufe) {
     const rarityIndex = RARITAETEN.indexOf(rarity);
     const anzahlStats = 1 + Math.floor(rarityIndex / 2);
@@ -123,24 +142,26 @@ const WoFCombat = (() => {
     });
     const slots = ['armor', 'weapon', 'amulet'];
     const slot = slots[Math.floor(Math.random() * slots.length)];
+    const gegenstand = LOOT_NAMEN[slot][Math.floor(Math.random() * LOOT_NAMEN[slot].length)];
     return {
       id: WoFState.cryptoId(),
       type: 'item',
       slot,
       rarity,
-      name: `${rarity} ${slot === 'armor' ? 'Rüstungsteil' : slot === 'weapon' ? 'Waffe' : 'Amulett'}`,
+      name: `${gegenstand} (${rarity})`, // "legendär Sportschuhe" wäre grammatikalisch falsch (Genus/Numerus)
       bonuses,
     };
   }
 
   function berechneBelohnung(character, monster, reps) {
-    const { talentBoni, talentMultiplikator, streakMultiplikator } = gemeinsameMultiplikatoren(character);
+    const { talentBoni, talentMultiplikator, streakMultiplikator, statBuffMultiplikator } = gemeinsameMultiplikatoren(character);
     const klassenBonus = klassenBonusAktiv(character, monster.bonusStat) ? 1.25 : 1.0;
     const ueberperformung = 1 + ueberperformanceFaktor(reps, monster.repZiel);
     const xp = monster.xpBasis * klassenBonus * talentMultiplikator * ueberperformung;
     const gold = monster.goldBasis * streakMultiplikator;
 
-    const statBetrag = Math.max(1, Math.floor(effektiveRepsFuerStat(reps, monster.repZiel) / 5));
+    const statRoh = Math.max(1, Math.floor(effektiveRepsFuerStat(reps, monster.repZiel) / 5));
+    const statBetrag = Math.max(1, Math.round(statRoh * statBuffMultiplikator));
     const loot = lootWuerfeln(monster.stufe, talentBoni.lootChanceBonus);
 
     return { xp, gold, statBetrag, stat: monster.bonusStat, loot, klassenBonusAktiv: klassenBonus > 1 };
@@ -164,8 +185,12 @@ const WoFCombat = (() => {
       stufe: monster.stufe,
       zeitpunkt: new Date().toISOString(),
     });
+    WoFState.energieFuerKampfVerbrauchen(character, monster.repZiel);
+    WoFState.buffsNachKampfAktualisieren(character);
+    const supplementDrops = WoFConsumables.wuerfleDrops(false);
+    WoFConsumables.gutschreiben(character, supplementDrops);
     WoFState.speichern(character);
-    return { belohnung, levelUps };
+    return { belohnung, levelUps, supplementDrops };
   }
 
   // ---- Belohnungslogik: Boss-Kämpfe (Punkt 5.3/5.4) ----------------------
@@ -201,8 +226,11 @@ const WoFCombat = (() => {
       zeitpunkt: new Date().toISOString(),
     });
     WoFBosses.setzeCooldown(character, boss.id);
+    WoFState.buffsNachKampfAktualisieren(character); // einmal pro ganzem Boss-Kampf, nicht pro Phase
+    const supplementDrops = WoFConsumables.wuerfleDrops(true);
+    WoFConsumables.gutschreiben(character, supplementDrops);
     WoFState.speichern(character);
-    return { belohnung, levelUps };
+    return { belohnung, levelUps, supplementDrops };
   }
 
   // ---- Modal-UI -----------------------------------------------------------
@@ -523,7 +551,7 @@ const WoFCombat = (() => {
     el('combat-controls').classList.add('hidden');
 
     spieleKOSequenz(() => {
-      const { belohnung, levelUps } = abschliessen(character, monster, reps);
+      const { belohnung, levelUps, supplementDrops } = abschliessen(character, monster, reps);
       zeigeErgebnis({
         character,
         titel: 'K.O.!',
@@ -531,6 +559,7 @@ const WoFCombat = (() => {
           `+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}`,
           `+${Math.round(belohnung.gold)} Gold`,
           `+${belohnung.statBetrag} ${belohnung.stat}`,
+          ...formatiereSupplementZeilen(supplementDrops),
         ],
         loot: belohnung.loot,
         levelUps,
@@ -539,15 +568,25 @@ const WoFCombat = (() => {
     });
   }
 
+  function formatiereSupplementZeilen(supplementDrops) {
+    return supplementDrops.map((id) => {
+      const s = WoFConsumables.SUPPLEMENTE[id];
+      return `${s.emoji} +1 ${s.name}`;
+    });
+  }
+
   // Eine Boss-Phase geschafft: Stat sofort gutschreiben (jede Übung
   // trainiert ihren eigenen Stat), dann entweder zur nächsten Phase
   // oder — bei der letzten Phase — die volle K.O.-Sequenz + Belohnung.
   function fertigBossPhase() {
     const { character, aktuellePhase, reps, boss, phaseIndex, onClose } = aktuellerKampf;
-    const statBetrag = Math.max(1, Math.floor(effektiveRepsFuerStat(reps, aktuellePhase.repZiel) / 5));
+    const { statBuffMultiplikator } = gemeinsameMultiplikatoren(character);
+    const statRoh = Math.max(1, Math.floor(effektiveRepsFuerStat(reps, aktuellePhase.repZiel) / 5));
+    const statBetrag = Math.max(1, Math.round(statRoh * statBuffMultiplikator));
     WoFState.statErhoehen(character, aktuellePhase.bonusStat, statBetrag);
     aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] =
       (aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] || 0) + statBetrag;
+    WoFState.energieFuerKampfVerbrauchen(character, aktuellePhase.repZiel);
 
     const istLetztePhase = phaseIndex >= boss.phasen.length - 1;
     stoppeSensor(); // pro Phase neu aktivieren (neue Übung, neue Bewegung)
@@ -573,7 +612,7 @@ const WoFCombat = (() => {
 
     el('combat-controls').classList.add('hidden');
     spieleKOSequenz(() => {
-      const { belohnung, levelUps } = schliesseBossKampfAb(character, boss);
+      const { belohnung, levelUps, supplementDrops } = schliesseBossKampfAb(character, boss);
       const statZeilen = Object.entries(aktuellerKampf.gesammelteStatBoni).map(
         ([stat, betrag]) => `+${betrag} ${stat}`
       );
@@ -584,6 +623,7 @@ const WoFCombat = (() => {
           `+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}`,
           `+${Math.round(belohnung.gold)} Gold`,
           ...statZeilen,
+          ...formatiereSupplementZeilen(supplementDrops),
         ],
         loot: belohnung.loot,
         levelUps,
@@ -599,7 +639,7 @@ const WoFCombat = (() => {
     result.innerHTML = `
       <h3>${titel}</h3>
       ${zeilen.map((z) => `<p>${z}</p>`).join('')}
-      ${loot ? `<p class="loot">Beute: ${loot.rarity} — ${loot.name}</p>` : '<p>Kein Beutefund diesmal.</p>'}
+      ${loot ? `<p class="loot">Beute: ${loot.name}</p>` : '<p>Kein Beutefund diesmal.</p>'}
       ${levelUps.length ? `<p class="levelup">Level Up! Jetzt Stufe ${character.level}</p>` : ''}
       ${flavorText ? `<p class="field-hint">${flavorText}</p>` : ''}
       <button id="combat-weiter-btn" class="btn-primary">Weiter</button>

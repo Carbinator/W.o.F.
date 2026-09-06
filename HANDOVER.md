@@ -175,6 +175,22 @@ Boss-Kämpfe sollten mehrphasig sein (2-3 verschiedene Übungen nacheinander) un
 - **Streak-Grace** (aus Talent) erlaubt X Tage Auszeit ohne Streak-Verlust
 - Streak-Boni: +Gold-Multiplikator, +Combat-Damage im Kampf
 
+### 5.7 Energie-System + Verbrauchsgüter (Ergänzung vom 2026-09-06)
+
+**Entscheidung:** Der User fragte, was beim Besiegen eines Mobs/Bosses eigentlich gelootet wird, und schlug 4 konkrete Supplements vor. Dabei fiel auf: "Regeneration/Heilung" ergab bis dahin keinen Sinn, weil es gar keine Erschöpfung gab (Charakter nach 100 Kniebeugen == Charakter davor). Deshalb zusätzlich ein Energie-System eingeführt — bewusst OHNE Kampf-Niederlage/-Blocker (passt zu Punkt 6.5: keine Boss-Gegenangriffe).
+
+- **Energie-Leiste** (0-100): sinkt proportional zu geleisteten Reps pro Kampf/Training, regeneriert passiv mit +5/Stunde Realzeit. Unter 30 → sanfter XP-Malus (-20%), NIE ein Spielblocker.
+- **Verbrauchsgüter** (neue Item-Kategorie, zusätzlich zur Ausrüstung aus 5.5, würfeln unabhängig von Ausrüstungs-Loot):
+
+| Item | Drop-Chance (Mob/Boss) | Effekt |
+|---|---|---|
+| 🥤 Eiweißshake | 25% / 40% | Sofort +30 Energie |
+| 🐟 Omega-3 Kapsel | 10% / 20% | +15% XP für 3 Kämpfe |
+| 💊 Kreatin | 10% / 20% | +15% Stat-Zuwachs für 3 Kämpfe |
+| 🧪 Swoley Shake | 2% / 8% | Volle Energie + beide Buffs auf +20% für 3 Kämpfe |
+
+- **Sportlich-konkrete Loot-Namen:** Auf Wunsch des Users heißt zufällig gedropptes Ausrüstungs-Loot jetzt nicht mehr generisch "Rüstungsteil"/"Waffe"/"Amulett", sondern konkret (Sportschuhe, Trainingsjacke, Schweißband, Trinkflasche, Handtuch, ...). Die Klassen-Startausrüstung aus 4.5 (Wildling-Fell etc.) bleibt als gesetzte Klassen-Identität unverändert.
+
 ## 6. Streetfighter-Kampfsystem
 
 **Ziel:** Vollflächen-Kampf-Overlay der aussieht und sich anfühlt wie ein 90er Streetfighter-Automat.

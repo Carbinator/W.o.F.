@@ -55,12 +55,16 @@ const WoFFreiesTraining = (() => {
   }
 
   function abschliessen(character, eingabe) {
+    WoFState.aktualisiereEnergiePassiv(character);
     const belohnung = berechneBelohnung(eingabe);
     const levelUps = WoFState.xpHinzufuegen(character, belohnung.xp);
     Object.entries(belohnung.statBoni).forEach(([stat, betrag]) => {
       WoFState.statErhoehen(character, stat, betrag);
     });
     WoFState.streakAktualisieren(character);
+    // Echte Erschöpfung gilt unabhängig davon, ob man gegen ein Monster
+    // oder frei trainiert hat — Energie-Kosten grob an der Dauer bemessen.
+    WoFState.energieAendern(character, -Math.max(2, Math.round(eingabe.dauerMinuten / 10)));
     WoFState.speichern(character);
     return { belohnung, levelUps };
   }
