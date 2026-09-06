@@ -340,35 +340,76 @@ const WoFMonsters = (() => {
     `;
   }
 
-  // Runder Knödel-Körper mit Gabel und Dampf-Schwaden.
+  // Dreistöckiger Knödel-Turm (Kopf/Torso/Basis wie ein Schneemann), mit
+  // Kürbis-artigem Fratzengesicht, Pfeffer-/Kräuterflecken-Textur per
+  // Glanz-Gradient und Teigfäusten — Versuch einer deutlich aufwändigeren
+  // Hand-SVG-Illustration (Vorlage: User-Referenzbild "K-AI vs Knödel").
+  // Bleibt Vektor/flach; ersetzt keine echte gemalte Illustration.
   function renderKnoedel(stufe) {
-    const farben = ['#f0ead8', '#e8dcc0', '#dcd0ac', '#d0c498', '#c4b884'];
+    const farben = ['#f0ead8', '#e8dcc0', '#dcd0ac', '#c8a878', '#a8845a'];
     const namen = FAMILIEN.knoedel.stufen;
     const idx = stufe - 1;
     const farbe = farben[idx];
     const g = groesseFuer(stufe);
     const cx = 80;
-    const cy = 130;
-    const r = 42 * g;
+    const kopfCy = 66;
+    const kopfR = 28 * g;
+    const torsoCy = 118;
+    const torsoR = 34 * g;
+    const basisCy = 176;
+    const basisR = 40 * g;
+    const gradientId = `knoedelGlanz${idx}`;
+
+    let pfefferPunkte = '';
+    for (let i = 0; i < 6; i++) {
+      const winkel = (i / 6) * Math.PI * 2;
+      const px = cx + Math.cos(winkel) * torsoR * 0.55;
+      const py = torsoCy + Math.sin(winkel) * torsoR * 0.4;
+      pfefferPunkte += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${2.2 * g}" fill="#5a4028"/>`;
+    }
+    let kraeuterFlecken = '';
+    for (let i = 0; i < 5; i++) {
+      const winkel = (i / 5) * Math.PI * 2 + 0.3;
+      const px = cx + Math.cos(winkel) * basisR * 0.6;
+      const py = basisCy + Math.sin(winkel) * basisR * 0.35;
+      kraeuterFlecken += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${3.4 * g}" fill="#7a9a4a"/>`;
+    }
 
     return `
       <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
+        <defs>
+          <radialGradient id="${gradientId}" cx="35%" cy="28%" r="75%">
+            <stop offset="0%" stop-color="#fffdf5"/>
+            <stop offset="55%" stop-color="${farbe}"/>
+            <stop offset="100%" stop-color="#8a7048"/>
+          </radialGradient>
+        </defs>
         <!-- Dampf -->
-        <g stroke="#cfead0" stroke-width="${3 * g}" fill="none" opacity="0.8">
-          <path d="M ${cx - 14 * g} ${cy - r - 6} Q ${cx - 20 * g} ${cy - r - 20} ${cx - 12 * g} ${cy - r - 34}"/>
-          <path d="M ${cx + 14 * g} ${cy - r - 6} Q ${cx + 20 * g} ${cy - r - 20} ${cx + 12 * g} ${cy - r - 34}"/>
+        <g stroke="#cfead0" stroke-width="${2.4 * g}" fill="none" opacity="0.75">
+          <path d="M ${cx - 15 * g} ${kopfCy - kopfR - 4} Q ${cx - 21 * g} ${kopfCy - kopfR - 18} ${cx - 13 * g} ${kopfCy - kopfR - 32}"/>
+          <path d="M ${cx + 15 * g} ${kopfCy - kopfR - 4} Q ${cx + 21 * g} ${kopfCy - kopfR - 18} ${cx + 13 * g} ${kopfCy - kopfR - 32}"/>
         </g>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="${farbe}"/>
-        <g fill="#6a5a3a">
-          <circle cx="${cx - 12 * g}" cy="${cy - 6 * g}" r="${3 * g}"/>
-          <circle cx="${cx + 12 * g}" cy="${cy - 6 * g}" r="${3 * g}"/>
+        <!-- Teigfäuste -->
+        <g fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1">
+          <ellipse cx="${cx - basisR - 4 * g}" cy="${torsoCy + 8 * g}" rx="${13 * g}" ry="${15 * g}" transform="rotate(-25 ${cx - basisR - 4 * g} ${torsoCy + 8 * g})"/>
+          <ellipse cx="${cx + basisR + 4 * g}" cy="${torsoCy + 8 * g}" rx="${13 * g}" ry="${15 * g}" transform="rotate(25 ${cx + basisR + 4 * g} ${torsoCy + 8 * g})"/>
         </g>
-        <path d="M ${cx - 8 * g} ${cy + 8 * g} Q ${cx} ${cy + 2 * g} ${cx + 8 * g} ${cy + 8 * g}" stroke="#6a5a3a" stroke-width="${2 * g}" fill="none"/>
-        <!-- Gabel im Knödel -->
-        <g stroke="#9a9a9a" stroke-width="${2.5 * g}" fill="none">
-          <line x1="${cx + r - 10 * g}" y1="${cy - r + 4 * g}" x2="${cx + r - 24 * g}" y2="${cy - 4 * g}"/>
-          <line x1="${cx + r - 6 * g}" y1="${cy - r - 2 * g}" x2="${cx + r - 18 * g}" y2="${cy - r + 10 * g}"/>
-          <line x1="${cx + r - 14 * g}" y1="${cy - r - 2 * g}" x2="${cx + r - 26 * g}" y2="${cy - r + 10 * g}"/>
+        <!-- Basis (unten, größte Kugel) mit Kräuterflecken -->
+        <circle cx="${cx}" cy="${basisCy}" r="${basisR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
+        ${kraeuterFlecken}
+        <!-- Torso (Mitte) mit Pfefferpunkten -->
+        <circle cx="${cx}" cy="${torsoCy}" r="${torsoR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
+        ${pfefferPunkte}
+        <!-- Kopf -->
+        <circle cx="${cx}" cy="${kopfCy}" r="${kopfR}" fill="url(#${gradientId})" stroke="#8a7048" stroke-width="1.5"/>
+        <!-- Böse Kürbis-Fratze -->
+        <g fill="#2a1a0a">
+          <path d="M ${cx - 14 * g} ${kopfCy - 6 * g} L ${cx - 4 * g} ${kopfCy - 2 * g} L ${cx - 14 * g} ${kopfCy + 2 * g} Z"/>
+          <path d="M ${cx + 14 * g} ${kopfCy - 6 * g} L ${cx + 4 * g} ${kopfCy - 2 * g} L ${cx + 14 * g} ${kopfCy + 2 * g} Z"/>
+          <path d="M ${cx - 12 * g} ${kopfCy + 12 * g}
+                   Q ${cx} ${kopfCy + 20 * g} ${cx + 12 * g} ${kopfCy + 12 * g}
+                   L ${cx + 8 * g} ${kopfCy + 11 * g} L ${cx + 5 * g} ${kopfCy + 16 * g} L ${cx + 2 * g} ${kopfCy + 11 * g}
+                   L ${cx - 2 * g} ${kopfCy + 16 * g} L ${cx - 5 * g} ${kopfCy + 11 * g} L ${cx - 8 * g} ${kopfCy + 16 * g} Z"/>
         </g>
       </svg>
     `;
