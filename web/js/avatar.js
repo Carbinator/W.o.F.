@@ -134,12 +134,13 @@ const WoFAvatar = (() => {
       case 'saiyajin': {
         // Dragonball-artige Stachelfrisur: Zacken-Kranz vom linken über
         // den oberen Kopfrand bis zum rechten Ohr (Grad 180 -> 360, geht
-        // durch 270 = "oben"), Gesicht/Kinn bleiben frei. Wechselnde
-        // Längen für den typischen chaotisch-dynamischen Anime-Look.
-        const anzahlZacken = 9;
+        // durch 270 = "oben"), Gesicht/Kinn bleiben frei. Deutlicher
+        // Längen-Verlauf (User-Korrektur): an den Seiten kurz, zur Mitte/
+        // oben hin lang und zackig, statt an allen Enden ähnlich lang.
+        const anzahlZacken = 11;
         const startGrad = 180;
         const endGrad = 360;
-        const laengenFaktor = [1.9, 1.1, 1.6, 1.0, 2.1, 1.0, 1.6, 1.1, 1.9];
+        const laengenFaktor = [0.4, 0.7, 1.0, 1.4, 1.8, 2.3, 1.8, 1.4, 1.0, 0.7, 0.4];
         let zacken2 = '';
         for (let i = 0; i < anzahlZacken; i++) {
           const t = i / (anzahlZacken - 1);
