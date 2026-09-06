@@ -91,9 +91,9 @@ Formel für Charakter-Power im Kampf: Summe aller Stats + Ausrüstungs-Boni + Ta
 - **Klasse** (siehe 4.1)
 - **Geschlecht:** female / diverse / male (beeinflusst Silhouette/Schultern/Hüfte)
 - **Körperbau:** ecto (schlank) / meso (athletisch) / endo (stämmig) — beeinflusst Breite
-- **Hautton:** 6 Presets (#f5d5b8, #e8b48a, #d19468, #a06a3a, #6b4020, #3a2010)
+- **Hautton:** 7 Presets (#f5d5b8, #e8b48a, #d19468, #a06a3a, #6b4020, #3a2010, #b8342a — letzterer ein "rothäutiger" Fantasy-Ton, Ergänzung 2026-09-06 auf User-Wunsch)
 - **Haarfarbe:** 10 Presets (#1a1008, #3a2418, #6b4020, #a86828, #d4a44a, #e8dcc0, #c04040, #8a3060, #2050a0, #3d7a3d)
-- **Frisur:** 6 Varianten (kurz, mittel, lang, zopf, dutt, kahl)
+- **Frisur:** 7 Varianten (kurz, mittel, lang, zopf, dutt, irokese, kahl) — Irokese (Ergänzung 2026-09-06) ist ein zackiger Kamm mittig über dem Kopf, Seiten bleiben frei
 - **Fitness-Startlevel:** 1-5
 
 **Live-Vorschau** des Avatars im Editor. Modularer SVG-Generator der zur Laufzeit aus den Parametern das SVG baut. Avatar wird auch im Held-Tab und im Kampf-Modal angezeigt.

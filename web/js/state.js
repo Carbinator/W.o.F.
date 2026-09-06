@@ -157,12 +157,12 @@ const WoFState = (() => {
     5: { label: 'Ultra', startCharLvl: 15, statBonus: 45 },
   };
 
-  const HAUTTON_PRESETS = ['#f5d5b8', '#e8b48a', '#d19468', '#a06a3a', '#6b4020', '#3a2010'];
+  const HAUTTON_PRESETS = ['#f5d5b8', '#e8b48a', '#d19468', '#a06a3a', '#6b4020', '#3a2010', '#b8342a'];
   const HAARFARBE_PRESETS = [
     '#1a1008', '#3a2418', '#6b4020', '#a86828', '#d4a44a',
     '#e8dcc0', '#c04040', '#8a3060', '#2050a0', '#3d7a3d',
   ];
-  const FRISUREN = ['kurz', 'mittel', 'lang', 'zopf', 'dutt', 'kahl'];
+  const FRISUREN = ['kurz', 'mittel', 'lang', 'zopf', 'dutt', 'irokese', 'kahl'];
 
   // XP-Kurve: eigene Annahme (im HANDOVER nicht spezifiziert) — linear
   // wachsender Bedarf pro Level. Kann später leicht angepasst werden.

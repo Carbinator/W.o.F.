@@ -116,6 +116,21 @@ const WoFAvatar = (() => {
           ${haarKappe(cx, cy, r)}
           <circle cx="${cx}" cy="${cy - r - 6}" r="7"/>
         `;
+      case 'irokese': {
+        // Zackiger Haarkamm mittig über dem Kopf, Seiten bleiben frei
+        // (kein haarKappe() hier, sonst wäre es kein Irokesenschnitt).
+        // Mehrere überlappende Zacken statt einer einzelnen dünnen Spitze,
+        // damit die Frisur auch klein (Kampf-Modal, Held-Tab) klar als
+        // Irokese erkennbar bleibt.
+        const versatz = [-9, -3, 3, 9];
+        const zacken = versatz
+          .map((dx) => {
+            const hoehe = 30 - Math.abs(dx) * 1.6;
+            return `M ${cx + dx - 5} ${cy - r + 8} L ${cx + dx} ${cy - r - hoehe} L ${cx + dx + 5} ${cy - r + 8} Z`;
+          })
+          .join(' ');
+        return `<path d="${zacken}"/>`;
+      }
       default:
         return '';
     }
