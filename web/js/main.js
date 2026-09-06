@@ -268,7 +268,7 @@
       .map(([slot, item]) => `
         <li>
           <span>${SLOT_NAMEN[slot] || slot}: ${item.name}</span>
-          <span>${formatBoni(item.bonuses)}</span>
+          <span>${formatiereStatBoni(item.bonuses)}</span>
           <button class="btn-secondary ablegen-btn" data-slot="${slot}">Ablegen</button>
         </li>`)
       .join('');
@@ -287,7 +287,7 @@
         return `
           <li>
             <span>${item.name}${istAusgeruestet ? ' (ausgerüstet)' : ''}</span>
-            <span>${formatBoni(item.bonuses)}</span>
+            <span>${formatiereStatBoni(item.bonuses)}</span>
             <button class="btn-secondary ausruesten-btn" data-id="${item.id}" ${istAusgeruestet ? 'disabled' : ''}>Ausrüsten</button>
           </li>`;
       })
@@ -355,12 +355,6 @@
     }
     const ortText = eintrag.trainingsplatz ? ' 📍 am Trainingsplatz' : '';
     return `${datum} — 🏋️ ${eintrag.uebung} (${eintrag.intensitaet}, ${eintrag.dauerMinuten} Min)${ortText} · +${eintrag.xp} XP${statText ? ', ' + statText : ''}`;
-  }
-
-  function formatBoni(bonuses) {
-    return Object.entries(bonuses || {})
-      .map(([stat, wert]) => `+${wert} ${stat}`)
-      .join(', ');
   }
 
   // ---- Talente-Tab (Punkt 4.6) ----------------------------------------------

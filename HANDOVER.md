@@ -2,6 +2,39 @@
 
 **Kontext:** Diese Datei fasst alle Design-Entscheidungen, Content-Kanon und offenen Fragen zusammen, die in einer vorherigen Chat-Session mit Claude besprochen wurden. Nutze sie als Referenz beim Neuaufbau der App als Client-Only-Web-App.
 
+---
+
+## Status für die Übergabe (Stand 2026-09-06, nach finalem Testdurchlauf)
+
+**Fertig & automatisiert getestet** (Playwright, 50+ Checks, 0 offene Fehler, 0 JS-Exceptions):
+- Kompletter Charakter-Flow: Erstellung, Bearbeiten, SVG-Avatar (4 Klassen × Geschlecht × Körperbau × 6 Hauttöne × 10 Haarfarben × 6 Frisuren)
+- Alle 6 Monster-Familien (je 5 Stufen) + alle 16 Bosse — eigenes Hand-SVG-Design pro Familie/Boss, eigener Kampfspruch (siehe 6.6)
+- Streetfighter-Kampf-Overlay (VS-Intro, Combo-System, K.O.-Sequenz, Sound-Effekte), inkl. Fliehen und direktem Neustart danach
+- Belohnungssystem: XP/Gold/Loot/Überperformance-Bonus, Talente (3 Äste × 3 Stufen/Klasse, Effekte geprüft), Streak + Grace-Tage, Boss-Cooldowns
+- Energie-System + 4 Verbrauchsgüter (Erschöpfung ohne Kampf-Niederlage, siehe 5.7)
+- Freies Training (alle 7 Typen) + eigener Wochenplan (9.1) + Trainingslog (5.8)
+- Echte Trainingsplätze via Overpass API mit Rate-Limiting (7.2)
+- Sensor-Modus für die Zuckerhydra mit iOS-Permission-Handling (Punkt 8)
+- Spielstand-Migration: auch sehr alte Saves mit mehreren gleichzeitig fehlenden Feldern laden ohne Datenverlust
+
+**Sicherheitsfix (im finalen Review gefunden und behoben):** `map.js` übergab OSM-Trainingsplatz-Namen — frei editierbare Fremddaten — ungefiltert an Leaflets `bindPopup()`, was eine echte XSS-Lücke war (Leaflet interpretiert einen übergebenen String dort als HTML). Behoben durch einen `textContent`-basierten DOM-Node statt eines rohen Strings; mit einem gezielten Exploit-Test verifiziert (manipulierter `<img onerror=...>`-Name löst nichts aus).
+
+**NICHT auf echtem Gerät getestet** (diese Session hatte nur einen Sandbox-Browser, kein echtes Handy/Netz):
+- Echtes GPS (nur simulierte Koordinaten in Tests)
+- Echte Overpass-Antworten (die API ist in dieser Sandbox netzwerkseitig blockiert — Fehlerfall/Fallback ist aber getestet, siehe 7.2)
+- Echter Bewegungssensor/Accelerometer (Permission-Flow + Logik geprüft, aber ohne echte Bewegungsdaten)
+- `alert()`-Dialoge im WebView-Wrapper — ob die sichtbar sind, hängt davon ab, ob der Wrapper `WebChromeClient.onJsAlert` implementiert (siehe `web/icons/APK-HINWEISE.md`)
+- Reales Rendering/Performance/Touch-Verhalten im Android-WebView
+
+**Bewusst nicht gebaut:** Special-Moves nach Combo (6.5), Boss-Gegenangriffe (6.5, Design-Entscheidung), Sugartooth Devil (11.1), Multiplayer (13).
+
+**Für die Weiterarbeit offen:**
+- Kampfsprüche sind aktuell Claude-Platzhalter — der User schreibt Namen/Sprüche selbst, siehe 6.6. Nicht einfach durch neue KI-Vorschläge ersetzen.
+- Kein UI für Spielstand-Reset (`WoFState.zuruecksetzen()` existiert als Funktion, ist aber an keinen Button angebunden)
+- Kein Verkaufen/Wegwerfen von Loot — Inventar wächst unbegrenzt (kein Crash-Risiko mehr, `speichern()` fängt localStorage-Fehler jetzt ab, aber irgendwann UX-relevant)
+
+---
+
 ## 1. Vision & Ziel
 
 **WoF** (World of Fitness) ist eine Fitness-Gamification-App im Stil von Ingress/Pokemon Go, aber im Solo-Modus. Der Spieler bewegt sich real durch seine Umgebung, trifft auf gespawnte Monster und wird durch echtes Training belohnt.
@@ -104,16 +137,18 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 ### 5.2 Häufig-Spawner-Familien
 
-Aktuell konzipiert (Übung/Namen bitte thematisch stimmig zuordnen):
+**✅ Umgesetzt** (Stand nach mehreren Iterationen — "Creatures" wurde auf User-Wunsch zu "Burger" umbenannt/umgestaltet, siehe `monsters.js`):
 
-| Familie | Übung (Vorschlag) | Bonus-Stat |
+| Familie | Übung | Bonus-Stat |
 |---|---|---|
 | Squat Goblin | Kniebeugen | muskelaufbau |
 | Pusher Demon | Liegestütze | kraft |
-| Dumplings | ? (evtl. weiche Ab-Übungen: Sit-Ups, Crunches) | muskelaufbau |
-| Creatures | ? (evtl. Ganzkörper: Burpees) | ausdauer |
-| Killer Kebab Snakes | ? (evtl. Rotation: Russian Twists) | beweglichkeit |
-| Knödel | ? (evtl. Rolling Ab: Hollow Body Rocks) | willenskraft |
+| Dumplings | Sit-Ups | muskelaufbau |
+| Burger (intern weiterhin familyId `creatures`) | Burpees | ausdauer |
+| Killer Kebab Snakes | Russian Twists | beweglichkeit |
+| Knödel | Hollow Body Rocks | willenskraft |
+
+Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Burger: mehr Patties/Belag pro Stufe; Knödel: eine Kugel mehr pro Stufe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6).
 
 **Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahme:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
@@ -241,6 +276,12 @@ Boss-Kämpfe sollten mehrphasig sein (2-3 verschiedene Übungen nacheinander) un
 - ~~Sounds via Web Audio API~~ ✅ implementiert (Ergänzung vom 2026-09-06, siehe `sound.js`): synthetische Töne per Oszillator für Treffer, Combo, Loot, Level-Up und Sieg, keine externen Audio-Dateien. Stummschalt-Button im Header.
 - Special-Moves nach 5er-Combo — auf ausdrücklichen Wunsch des Users erstmal zurückgestellt ("brauchen wir jetzt noch nicht").
 - Boss-Gegenangriffe (aktuell dominiert Spieler komplett — bewusste Design-Entscheidung, weil "vom Fitness-Boss besiegt werden" demotivierend wäre)
+
+### 6.6 Kampfsprüche (eigene Ergänzung vom 2026-09-06, User-Wunsch)
+
+Jede Monster-Familie (2 rotierende Sprüche) und jeder Boss (1 Spruch) hat einen kurzen, augenzwinkernden Kampfspruch (Vorbild: "Sei kein Knödel, mach Crunches!"), der beim Kampfstart zufällig gezogen und kursiv unter dem Gegnernamen angezeigt wird (`WoFMonsters.zufallsSpruch()`, Felder `sprueche` in `monsters.js`/`bosses.js`).
+
+**Wichtig für die Weiterarbeit:** Die aktuellen Sprüche sind nur Platzhalter von Claude. Der User schreibt sich die finalen Sprüche (und ggf. auch Namen) selbst — nicht einfach durch neue KI-Vorschläge ersetzen, sondern auf seine Vorgaben warten.
 
 ## 7. Karten-System
 

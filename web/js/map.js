@@ -247,7 +247,13 @@ const WoFMap = (() => {
         const typ = typVonOverpassElement(element);
         const name = (element.tags && element.tags.name) || TRAININGSPLATZ_TYP_LABEL[typ];
         const marker = L.marker([lat, lng], { icon: trainingsplatzIcon(typ) }).addTo(map);
-        marker.bindPopup(name);
+        // Leaflet interpretiert einen String in bindPopup() als HTML. "name"
+        // kommt aus frei editierbaren OSM-Tags (Fremddaten!) — als Text-Node
+        // statt String übergeben, sonst wäre das eine XSS-Lücke über
+        // manipulierte OSM-Einträge in der Nähe des Spielers.
+        const popupInhalt = document.createElement('span');
+        popupInhalt.textContent = name;
+        marker.bindPopup(popupInhalt);
         trainingsplaetze.push({ lat, lng, name, typ, marker });
       });
     } catch (e) {

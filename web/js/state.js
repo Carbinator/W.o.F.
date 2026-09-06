@@ -223,7 +223,15 @@ const WoFState = (() => {
   }
 
   function speichern(state) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Kann bei vollem localStorage (Quota) oder privatem Browsing-Modus
+    // werfen — darf dann nicht den ganzen Kampf-/Trainings-Abschluss
+    // crashen lassen. Die Belohnung bleibt in diesem Fall nur bis zum
+    // nächsten erfolgreichen Save im Arbeitsspeicher erhalten.
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('WoF: Spielstand konnte nicht gespeichert werden', e);
+    }
   }
 
   function zuruecksetzen() {
