@@ -454,7 +454,11 @@ const WoFMonsters = (() => {
     `;
   }
 
-  // Schlange spiralig um einen Spieß gewickelt, mit Fleisch-Segmenten.
+  // Döner-Spieß: ein simpler Metallspieß mit einem Fleisch-Kegel drumrum
+  // (User-Wunsch: "kann das einfach ein Spieß sein und Fleisch drum
+  // rum?"), der mit jeder Stufe spürbar dicker wird — abgelöst vom
+  // vorherigen Design mit spiralig gewickelten Fleisch-Segmenten und
+  // Schlangenkopf.
   function renderKebabSnake(stufe) {
     const farben = ['#8a4a2a', '#9a3a1a', '#a82a10', '#b81a08', '#c80800'];
     const namen = FAMILIEN.killer_kebab_snakes.stufen;
@@ -462,32 +466,50 @@ const WoFMonsters = (() => {
     const farbe = farben[idx];
     const g = groesseFuer(stufe);
     const cx = 80;
-    const spiessTop = 40;
-    const spiessBottom = 200;
+    const spiessSpitze = 24;
+    const spiessUnten = 208;
+    const fleischOben = 50;
+    const fleischUnten = 200;
 
-    let segmente = '';
-    const anzahlSegmente = 5;
-    for (let i = 0; i < anzahlSegmente; i++) {
-      const y = spiessTop + 20 + i * ((spiessBottom - spiessTop - 40) / (anzahlSegmente - 1));
-      const richtungLinks = i % 2 === 0;
-      const offsetX = richtungLinks ? -18 * g : 18 * g;
-      segmente += `<ellipse cx="${cx + offsetX}" cy="${y}" rx="${20 * g}" ry="${13 * g}" fill="${farbe}"/>`;
+    // Radius wächst direkt mit der Stufe (nicht nur mit der generellen
+    // Größenskalierung g) — damit der Dickenzuwachs deutlich sichtbar ist.
+    const radiusOben = (8 + stufe * 2) * g;
+    const radiusUnten = (16 + stufe * 6) * g;
+
+    const kegelPfad = `M ${cx - radiusOben} ${fleischOben}
+                        L ${cx + radiusOben} ${fleischOben}
+                        L ${cx + radiusUnten} ${fleischUnten}
+                        L ${cx - radiusUnten} ${fleischUnten} Z`;
+
+    // Waagerechte Schnittlinien wie bei abgeschnittenem Dönerfleisch —
+    // mehr Schichten je dicker der Spieß.
+    let schichten = '';
+    const anzahlSchichten = 3 + stufe;
+    for (let i = 1; i < anzahlSchichten; i++) {
+      const t = i / anzahlSchichten;
+      const y = fleischOben + t * (fleischUnten - fleischOben);
+      const r = radiusOben + t * (radiusUnten - radiusOben);
+      schichten += `<line x1="${(cx - r).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(cx + r).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#4a1408" stroke-width="1.5" opacity="0.6"/>`;
     }
+
+    const augeCy = fleischOben + 16 * g;
 
     return `
       <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
-        <!-- Spieß -->
-        <rect x="${cx - 2}" y="${spiessTop - 14}" width="4" height="${spiessBottom - spiessTop + 28}" fill="#b0a898"/>
-        <polygon points="${cx - 5},${spiessTop - 14} ${cx + 5},${spiessTop - 14} ${cx},${spiessTop - 26}" fill="#8a8070"/>
-        ${segmente}
-        <!-- Schlangenkopf oben -->
-        <g fill="${farbe}">
-          <circle cx="${cx}" cy="${spiessTop}" r="${16 * g}"/>
-          <path d="M ${cx - 4 * g} ${spiessTop + 14 * g} L ${cx - 10 * g} ${spiessTop + 26 * g} L ${cx} ${spiessTop + 18 * g} L ${cx + 10 * g} ${spiessTop + 26 * g} L ${cx + 4 * g} ${spiessTop + 14 * g} Z"/>
-        </g>
+        <!-- Fleisch-Kegel -->
+        <path d="${kegelPfad}" fill="${farbe}"/>
+        ${schichten}
+        <!-- Spieß, oben und unten überstehend -->
+        <rect x="${cx - 2}" y="${spiessSpitze}" width="4" height="${spiessUnten - spiessSpitze}" fill="#b0a898"/>
+        <polygon points="${cx - 5},${spiessSpitze} ${cx + 5},${spiessSpitze} ${cx},${spiessSpitze - 14}" fill="#8a8070"/>
+        <!-- Augen -->
         <g fill="#e8d840">
-          <circle cx="${cx - 6 * g}" cy="${spiessTop - 2 * g}" r="${2.6 * g}"/>
-          <circle cx="${cx + 6 * g}" cy="${spiessTop - 2 * g}" r="${2.6 * g}"/>
+          <circle cx="${cx - 7 * g}" cy="${augeCy}" r="${2.8 * g}"/>
+          <circle cx="${cx + 7 * g}" cy="${augeCy}" r="${2.8 * g}"/>
+        </g>
+        <g fill="#14100c">
+          <circle cx="${cx - 7 * g}" cy="${augeCy}" r="${1.2 * g}"/>
+          <circle cx="${cx + 7 * g}" cy="${augeCy}" r="${1.2 * g}"/>
         </g>
       </svg>
     `;
