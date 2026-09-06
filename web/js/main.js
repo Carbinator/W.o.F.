@@ -307,7 +307,7 @@
     });
   }
 
-  const SLOT_NAMEN = { armor: 'Rüstung', weapon: 'Waffe', amulet: 'Amulett' };
+  const SLOT_NAMEN = { armor: 'Rüstung', weapon: 'Waffe', amulet: 'Armband' };
 
   function formatBoni(bonuses) {
     return Object.entries(bonuses || {})

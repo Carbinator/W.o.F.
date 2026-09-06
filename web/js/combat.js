@@ -129,7 +129,7 @@ const WoFCombat = (() => {
   const LOOT_NAMEN = {
     armor: ['Trainingsjacke', 'Kompressions-Shirt', 'Lauf-Leggings', 'Sport-Weste', 'Thermo-Unterhemd'],
     weapon: ['Sportschuhe', 'Springseil', 'Trainingshandschuhe', 'Griffbänder', 'Sprintschuhe'],
-    amulet: ['Schweißband', 'Fitness-Tracker', 'Trinkflasche', 'Handtuch', 'Halsband mit Kompass'],
+    amulet: ['Fitness-Armband', 'Pulsmesser-Armband', 'Sport-Armband mit Trittzähler', 'Smartwatch-Armband', 'Schweißband fürs Handgelenk'],
   };
 
   function generiereItem(rarity, stufe) {

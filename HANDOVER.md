@@ -189,7 +189,8 @@ Boss-Kämpfe sollten mehrphasig sein (2-3 verschiedene Übungen nacheinander) un
 | 💊 Kreatin | 10% / 20% | +15% Stat-Zuwachs für 3 Kämpfe |
 | 🧪 Swoley Shake | 2% / 8% | Volle Energie + beide Buffs auf +20% für 3 Kämpfe |
 
-- **Sportlich-konkrete Loot-Namen:** Auf Wunsch des Users heißt zufällig gedropptes Ausrüstungs-Loot jetzt nicht mehr generisch "Rüstungsteil"/"Waffe"/"Amulett", sondern konkret (Sportschuhe, Trainingsjacke, Schweißband, Trinkflasche, Handtuch, ...). Die Klassen-Startausrüstung aus 4.5 (Wildling-Fell etc.) bleibt als gesetzte Klassen-Identität unverändert.
+- **Sportlich-konkrete Loot-Namen:** Auf Wunsch des Users heißt zufällig gedropptes Ausrüstungs-Loot jetzt nicht mehr generisch "Rüstungsteil"/"Waffe"/"Amulett", sondern konkret (Sportschuhe, Trainingsjacke, Fitness-Armband, ...). Die Klassen-Startausrüstung aus 4.5 (Wildling-Fell etc.) bleibt als gesetzte Klassen-Identität unverändert.
+- **Amulett-Slot → Fitness-Armband:** Der technische Slot heißt intern weiterhin `amulet` (kein Migrationsbedarf für bestehende Spielstände), aber sowohl die Item-Namen als auch das UI-Label wurden auf "Armband" umgestellt (Fitness-Armband, Pulsmesser-Armband, Sport-Armband mit Trittzähler, Smartwatch-Armband, Schweißband fürs Handgelenk) — passend zu einem echten am Handgelenk getragenen Fitness-Tracker statt eines Fantasy-Amuletts.
 
 ## 6. Streetfighter-Kampfsystem
 
