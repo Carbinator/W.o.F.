@@ -1,9 +1,12 @@
 /**
- * combat.js — Kampf-Modal + Belohnungssystem (Punkt 5.4/5.5/5.6 + Schritt 6)
+ * combat.js — Kampf-Modal + Belohnungssystem + Streetfighter-Overlay
+ * (Punkt 5.4/5.5/5.6 + Punkt 6, Schritte 6/7/9/10)
  *
- * Schlichte Version laut Punkt 15 Schritt 6: Rep-Counter + Erledigt-Button.
- * Das volle Streetfighter-Overlay (Punkt 6) kommt erst in Schritt 9 —
- * bewusst noch nicht hier gebaut, damit der Zwischenstand testbar bleibt.
+ * VS-Intro, Attack-Choreografie mit Combo-Tracking und K.O.-Sequenz
+ * laufen rein CSS-animiert; die Reflow-Trick-Helper (triggerCss) sorgen
+ * dafür, dass Animationen bei schnellen Klicks jedes Mal neu starten.
+ * Sounds (Punkt 6.5) und Special-Moves nach 5er-Combo sind bewusst noch
+ * nicht gebaut (späterer Feinschliff).
  */
 
 const WoFCombat = (() => {
@@ -99,24 +102,71 @@ const WoFCombat = (() => {
 
   // ---- Modal-UI -----------------------------------------------------------
 
-  let aktuellerKampf = null; // { monster, reps, character, onClose }
+  const COMBO_FENSTER_MS = 1200; // Punkt 6.3: <1200ms Abstand zählt als Combo
+  const COMBO_SCHWELLE = 3; // ab 3x Combo: goldener Popup + Crit-Schadenszahlen
+
+  let aktuellerKampf = null; // { monster, reps, character, onClose, combo, abgeschlossen }
 
   function el(id) {
     return document.getElementById(id);
   }
 
+  // Erzwingt einen Reflow, damit eine CSS-Animation bei schnell
+  // aufeinanderfolgenden Klicks jedes Mal neu von vorne abspielt.
+  function triggerCss(id, klasse) {
+    const elem = el(id);
+    elem.classList.remove(klasse);
+    void elem.offsetWidth;
+    elem.classList.add(klasse);
+  }
+
   function starteKampf(character, monster, onClose) {
-    aktuellerKampf = { character, monster, reps: 0, onClose };
+    aktuellerKampf = {
+      character,
+      monster,
+      reps: 0,
+      onClose,
+      combo: { anzahl: 0, letzterKlick: 0 },
+      abgeschlossen: false,
+    };
 
     el('combat-monster-name').textContent = monster.name;
     el('combat-monster-svg').innerHTML = WoFMonsters.renderMonsterSVG(monster.familyId, monster.stufe);
+    el('combat-monster-svg').className = 'combat-fighter';
     el('combat-player-svg').innerHTML = WoFAvatar.renderAvatarSVG(character);
+    el('combat-player-svg').className = 'combat-fighter';
+    el('combat-monster-effects').innerHTML = '';
     el('combat-exercise').textContent = monster.uebung;
     el('combat-result').classList.add('hidden');
-    el('combat-controls').classList.remove('hidden');
+    el('combat-controls').classList.add('hidden');
+    el('combat-ko-overlay').classList.add('hidden');
+    el('combat-ko-overlay').classList.remove('play');
     aktualisiereCounter();
 
     el('combat-modal').classList.remove('hidden');
+    spieleVSIntro(monster, () => {
+      if (aktuellerKampf) el('combat-controls').classList.remove('hidden');
+    });
+  }
+
+  function spieleVSIntro(monster, onDone) {
+    const intro = el('combat-intro');
+    el('combat-intro-monster-name').textContent = monster.name.toUpperCase();
+    el('combat-intro-fight').classList.add('hidden');
+    intro.classList.remove('hidden');
+    intro.classList.remove('play');
+    void intro.offsetWidth;
+    intro.classList.add('play');
+
+    setTimeout(() => {
+      if (!aktuellerKampf) return;
+      el('combat-intro-fight').classList.remove('hidden');
+    }, 1900);
+
+    setTimeout(() => {
+      intro.classList.add('hidden');
+      if (aktuellerKampf) onDone();
+    }, 2600);
   }
 
   function aktualisiereCounter() {
@@ -131,15 +181,61 @@ const WoFCombat = (() => {
     el('combat-monster-hp-fill').style.width = `${hpAnteil * 100}%`;
   }
 
+  function spawnEffekt(klasse, text, istCrit) {
+    const layer = el('combat-monster-effects');
+    const node = document.createElement('div');
+    node.className = klasse + (istCrit ? ' crit' : '');
+    node.textContent = text;
+    node.style.left = `${30 + Math.random() * 40}%`;
+    layer.appendChild(node);
+    setTimeout(() => node.remove(), 900);
+  }
+
+  function zeigeComboPopup(anzahl) {
+    const popup = el('combat-combo-popup');
+    popup.textContent = `COMBO x${anzahl}!`;
+    popup.classList.remove('show');
+    void popup.offsetWidth;
+    popup.classList.add('show');
+  }
+
+  function spieleAngriffsAnimation(istCrit) {
+    triggerCss('combat-player-svg', 'lunge');
+    triggerCss('combat-monster-svg', 'hit');
+    triggerCss('combat-modal-content', 'shake');
+
+    const { monster } = aktuellerKampf;
+    const basisSchaden = Math.max(1, Math.round(100 / monster.repZiel));
+    const schaden = istCrit ? Math.round(basisSchaden * 1.5) : basisSchaden;
+
+    spawnEffekt('impact-star', '💥', false);
+    spawnEffekt('damage-number', `-${schaden}`, istCrit);
+    if (istCrit) zeigeComboPopup(aktuellerKampf.combo.anzahl);
+  }
+
   function repPlus() {
-    if (!aktuellerKampf) return;
+    if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
+    if (aktuellerKampf.reps >= aktuellerKampf.monster.repZiel) return;
+
+    const jetzt = Date.now();
+    const combo = aktuellerKampf.combo;
+    if (combo.letzterKlick && jetzt - combo.letzterKlick < COMBO_FENSTER_MS) {
+      combo.anzahl += 1;
+    } else {
+      combo.anzahl = 1;
+    }
+    combo.letzterKlick = jetzt;
+
     aktuellerKampf.reps = Math.min(aktuellerKampf.reps + 1, aktuellerKampf.monster.repZiel);
     aktualisiereCounter();
+    spieleAngriffsAnimation(combo.anzahl >= COMBO_SCHWELLE);
   }
 
   function repMinus() {
-    if (!aktuellerKampf) return;
+    if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
     aktuellerKampf.reps = Math.max(aktuellerKampf.reps - 1, 0);
+    aktuellerKampf.combo.anzahl = 0;
+    aktuellerKampf.combo.letzterKlick = 0;
     aktualisiereCounter();
   }
 
@@ -151,30 +247,52 @@ const WoFCombat = (() => {
     if (onClose) onClose({ geflohen: true });
   }
 
+  function spieleKOSequenz(callback) {
+    aktuellerKampf.abgeschlossen = true;
+    triggerCss('combat-monster-svg', 'boss-ko');
+    triggerCss('combat-modal-content', 'shake-final');
+
+    setTimeout(() => {
+      const overlay = el('combat-ko-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.remove('play');
+      void overlay.offsetWidth;
+      overlay.classList.add('play');
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        callback();
+      }, 1100);
+    }, 700);
+  }
+
   function fertig() {
-    if (!aktuellerKampf) return;
-    const { character, monster, reps, onClose } = aktuellerKampf;
+    if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
+    const { character, monster, reps } = aktuellerKampf;
     if (reps < monster.repZiel) return;
 
-    const { belohnung, levelUps } = abschliessen(character, monster, reps);
-
     el('combat-controls').classList.add('hidden');
-    const result = el('combat-result');
-    result.classList.remove('hidden');
-    result.innerHTML = `
-      <h3>K.O.!</h3>
-      <p>+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}</p>
-      <p>+${Math.round(belohnung.gold)} Gold</p>
-      <p>+${belohnung.statBetrag} ${belohnung.stat}</p>
-      ${belohnung.loot ? `<p class="loot">Beute: ${belohnung.loot.rarity} — ${belohnung.loot.name}</p>` : '<p>Kein Beutefund diesmal.</p>'}
-      ${levelUps.length ? `<p class="levelup">Level Up! Jetzt Stufe ${character.level}</p>` : ''}
-      <button id="combat-weiter-btn" class="btn-primary">Weiter</button>
-    `;
-    el('combat-weiter-btn').addEventListener('click', () => {
-      el('combat-modal').classList.add('hidden');
-      const kampf = aktuellerKampf;
-      aktuellerKampf = null;
-      if (kampf.onClose) kampf.onClose({ geflohen: false, belohnung, levelUps });
+
+    spieleKOSequenz(() => {
+      const { character: c, monster: m, reps: r, onClose } = aktuellerKampf;
+      const { belohnung, levelUps } = abschliessen(c, m, r);
+
+      const result = el('combat-result');
+      result.classList.remove('hidden');
+      result.innerHTML = `
+        <h3>K.O.!</h3>
+        <p>+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}</p>
+        <p>+${Math.round(belohnung.gold)} Gold</p>
+        <p>+${belohnung.statBetrag} ${belohnung.stat}</p>
+        ${belohnung.loot ? `<p class="loot">Beute: ${belohnung.loot.rarity} — ${belohnung.loot.name}</p>` : '<p>Kein Beutefund diesmal.</p>'}
+        ${levelUps.length ? `<p class="levelup">Level Up! Jetzt Stufe ${c.level}</p>` : ''}
+        <button id="combat-weiter-btn" class="btn-primary">Weiter</button>
+      `;
+      el('combat-weiter-btn').addEventListener('click', () => {
+        el('combat-modal').classList.add('hidden');
+        aktuellerKampf = null;
+        if (onClose) onClose({ geflohen: false, belohnung, levelUps });
+      });
     });
   }
 

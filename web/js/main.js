@@ -240,6 +240,60 @@
       .join(', ');
   }
 
+  // ---- Freies Training (Punkt 9) -------------------------------------------
+
+  function initTrainingForm() {
+    const typSelect = el('training-typ');
+    Object.entries(WoFFreiesTraining.TYPEN).forEach(([key, info]) => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = info.label;
+      typSelect.appendChild(opt);
+    });
+
+    const intSelect = el('training-intensitaet');
+    Object.entries(WoFFreiesTraining.INTENSITAETEN).forEach(([key, info]) => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = info.label;
+      if (key === 'mittel') opt.selected = true;
+      intSelect.appendChild(opt);
+    });
+
+    el('training-form').addEventListener('submit', onTrainingSubmit);
+  }
+
+  function onTrainingSubmit(evt) {
+    evt.preventDefault();
+    if (!character) return;
+
+    const eingabe = {
+      typ: el('training-typ').value,
+      dauerMinuten: parseInt(el('training-dauer').value, 10),
+      intensitaet: el('training-intensitaet').value,
+      trainingsplatz: el('training-trainingsplatz').checked,
+    };
+    if (!eingabe.dauerMinuten || eingabe.dauerMinuten < 5) {
+      alert('Bitte eine Dauer von mindestens 5 Minuten angeben.');
+      return;
+    }
+
+    const { belohnung, levelUps } = WoFFreiesTraining.abschliessen(character, eingabe);
+
+    const statText = Object.entries(belohnung.statBoni)
+      .map(([stat, betrag]) => `+${betrag} ${stat}`)
+      .join(', ');
+    const result = el('training-result');
+    result.classList.remove('hidden');
+    result.innerHTML = `
+      <p>Training eingetragen! +${Math.round(belohnung.xp)} XP, ${statText}</p>
+      ${levelUps.length ? `<p class="levelup">Level Up! Jetzt Stufe ${character.level}</p>` : ''}
+      <p class="field-hint">Streak: ${character.streak.count} Tag(e)</p>
+    `;
+
+    renderHeldTab();
+  }
+
   // ---- App-Start ------------------------------------------------------------
 
   function zeigeMainApp() {
@@ -259,6 +313,7 @@
 
     initNav();
     initEditorStatischeFelder();
+    initTrainingForm();
     el('editor-form').addEventListener('submit', onEditorSubmit);
     el('editor-cancel-btn').addEventListener('click', () => zeigeView('held'));
     el('held-edit-btn').addEventListener('click', () => starteEditor('bearbeiten'));

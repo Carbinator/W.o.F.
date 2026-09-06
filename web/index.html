@@ -16,6 +16,7 @@
       <h1 class="app-title">WoF</h1>
       <nav id="app-nav">
         <button class="nav-btn" data-view="karte">🗺️ Karte</button>
+        <button class="nav-btn" data-view="training">🏋️ Training</button>
         <button class="nav-btn" data-view="held">🧙 Held</button>
       </nav>
     </header>
@@ -100,6 +101,31 @@
         </div>
       </section>
 
+      <section id="view-training" class="view hidden">
+        <h2>Freies Training</h2>
+        <p class="field-hint">Training ohne Monster — der Anreiz sind die Monster, die Basis bleibt dein Training.</p>
+        <form id="training-form" class="training-form">
+          <label>
+            Typ
+            <select id="training-typ" name="typ"></select>
+          </label>
+          <label>
+            Dauer (Minuten)
+            <input type="number" id="training-dauer" name="dauer" min="5" max="300" step="5" value="30" required />
+          </label>
+          <label>
+            Intensität
+            <select id="training-intensitaet" name="intensitaet"></select>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="training-trainingsplatz" name="trainingsplatz" />
+            An einem Trainingsplatz (+20% XP)
+          </label>
+          <button type="submit" class="btn-primary">Eintragen</button>
+        </form>
+        <div id="training-result" class="training-result hidden"></div>
+      </section>
+
       <section id="view-held" class="view hidden">
         <div id="held-avatar" class="avatar-svg"></div>
         <div id="held-info">
@@ -119,7 +145,19 @@
   </div>
 
   <div id="combat-modal" class="modal hidden">
-    <div class="modal-content combat-content">
+    <div id="combat-modal-content" class="modal-content combat-content">
+      <div id="combat-intro" class="combat-intro hidden">
+        <div class="intro-name intro-name-left">SPIELER</div>
+        <div class="intro-vs">VS</div>
+        <div class="intro-name intro-name-right" id="combat-intro-monster-name"></div>
+        <div class="intro-ready" id="combat-intro-ready">READY?</div>
+        <div class="intro-fight hidden" id="combat-intro-fight">FIGHT!</div>
+      </div>
+
+      <div id="combat-ko-overlay" class="ko-overlay hidden">
+        <div class="ko-text">K.O.!</div>
+      </div>
+
       <h2 id="combat-monster-name"></h2>
       <div class="combat-arena">
         <div id="combat-player-svg" class="combat-fighter"></div>
@@ -127,10 +165,13 @@
         <div class="combat-fighter-wrap">
           <div class="hp-bar"><div id="combat-monster-hp-fill" class="hp-fill"></div></div>
           <div id="combat-monster-svg" class="combat-fighter"></div>
+          <div id="combat-monster-effects" class="combat-monster-effects"></div>
         </div>
       </div>
 
-      <div id="combat-controls">
+      <div id="combat-combo-popup" class="combo-popup"></div>
+
+      <div id="combat-controls" class="hidden">
         <p id="combat-exercise" class="exercise-name"></p>
         <p id="combat-counter" class="rep-counter"></p>
         <div class="combat-buttons">
@@ -153,6 +194,7 @@
   <script src="js/monsters.js"></script>
   <script src="js/combat.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/freetraining.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

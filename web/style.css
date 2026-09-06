@@ -273,6 +273,53 @@ h1, h2, h3 {
   font-size: 1.4rem;
 }
 
+/* ---- Training ---- */
+
+#view-training {
+  overflow-y: auto;
+  max-width: 480px;
+}
+
+.training-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.training-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+}
+
+.training-form select,
+.training-form input[type="number"] {
+  background: var(--bg-panel);
+  border: 1px solid #3a2f22;
+  color: var(--text);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.training-result {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  background: var(--bg-panel);
+}
+
 /* ---- Held ---- */
 
 #view-held {
@@ -331,12 +378,14 @@ h1, h2, h3 {
 }
 
 .modal-content {
+  position: relative;
   background: var(--bg-panel);
   border: 2px solid var(--gold);
   border-radius: 12px;
   padding: 1.2rem;
   width: min(520px, 92vw);
   text-align: center;
+  overflow: hidden;
 }
 
 .combat-arena {
@@ -349,6 +398,15 @@ h1, h2, h3 {
 
 .combat-fighter, .combat-fighter-wrap {
   flex: 1;
+}
+
+.combat-fighter-wrap {
+  position: relative;
+}
+
+#combat-player-svg,
+#combat-monster-svg {
+  display: inline-block;
 }
 
 .combat-fighter svg {
@@ -437,4 +495,260 @@ h1, h2, h3 {
 
 .combat-result .btn-primary {
   margin-top: 1rem;
+}
+
+/* ---- Streetfighter: VS-Intro (Punkt 6.2) ---- */
+
+.combat-intro {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 6, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 30;
+}
+
+.combat-intro.hidden {
+  display: none;
+}
+
+.intro-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  color: var(--gold-bright);
+  opacity: 0;
+}
+
+.combat-intro.play .intro-name-left {
+  animation: flyInLeft 0.5s ease-out forwards;
+}
+
+.combat-intro.play .intro-name-right {
+  animation: flyInRight 0.5s ease-out forwards;
+}
+
+.intro-vs {
+  font-family: 'Cinzel', serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--danger);
+  text-shadow: 0 0 12px var(--danger);
+  opacity: 0;
+}
+
+.combat-intro.play .intro-vs {
+  animation: vsPop 0.5s ease-out 0.45s forwards;
+}
+
+.intro-ready {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: var(--gold);
+  opacity: 0;
+}
+
+.combat-intro.play .intro-ready {
+  animation: readyPulse 0.9s ease-in-out 1.0s 1, fadeOutQuick 0.2s ease-in 1.9s forwards;
+}
+
+.intro-fight {
+  font-family: 'Cinzel', serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--danger);
+  text-shadow: 0 0 16px var(--danger);
+}
+
+.intro-fight.hidden {
+  display: none;
+}
+
+.combat-intro.play .intro-fight:not(.hidden) {
+  animation: fightExplode 0.5s ease-out forwards;
+}
+
+@keyframes flyInLeft {
+  from { transform: translateX(-140%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes flyInRight {
+  from { transform: translateX(140%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes vsPop {
+  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes readyPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes fadeOutQuick {
+  to { opacity: 0; }
+}
+
+@keyframes fightExplode {
+  0% { transform: scale(0.2); opacity: 0; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ---- Streetfighter: Attack-Choreografie (Punkt 6.3) ---- */
+
+#combat-player-svg.lunge {
+  animation: playerLunge 0.25s ease-out;
+}
+
+@keyframes playerLunge {
+  0% { transform: translateX(0) scale(1); }
+  40% { transform: translateX(24px) scale(1.06); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+#combat-monster-svg.hit {
+  animation: monsterHit 0.3s ease-out;
+}
+
+@keyframes monsterHit {
+  0% { transform: translateX(0) rotate(0); }
+  30% { transform: translateX(-14px) rotate(-6deg); }
+  60% { transform: translateX(6px) rotate(3deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+#combat-modal-content.shake {
+  animation: screenShake 0.25s ease-in-out;
+}
+
+#combat-modal-content.shake-final {
+  animation: screenShake 0.35s ease-in-out 2;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-5px, 3px); }
+  40% { transform: translate(5px, -3px); }
+  60% { transform: translate(-3px, 2px); }
+  80% { transform: translate(3px, -2px); }
+}
+
+.combat-monster-effects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.impact-star {
+  position: absolute;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  font-size: 1.6rem;
+  animation: impactPop 0.35s ease-out forwards;
+}
+
+@keyframes impactPop {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  40% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+.damage-number {
+  position: absolute;
+  top: 22%;
+  transform: translate(-50%, 0);
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #fff;
+  animation: dmgFloat 0.8s ease-out forwards;
+}
+
+.damage-number.crit {
+  color: var(--gold-bright);
+  font-size: 1.7rem;
+  text-shadow: 0 0 8px var(--gold);
+}
+
+@keyframes dmgFloat {
+  0% { opacity: 0; transform: translate(-50%, 0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -40px); }
+}
+
+.combo-popup {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Cinzel', serif;
+  font-size: 1.7rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 10px var(--gold);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.combo-popup.show {
+  animation: comboPop 0.9s ease-out;
+}
+
+@keyframes comboPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- Streetfighter: K.O.-Sequenz (Punkt 6.4) ---- */
+
+#combat-monster-svg.boss-ko {
+  animation: bossKO 0.7s ease-in forwards;
+}
+
+@keyframes bossKO {
+  0% { transform: rotate(0) scale(1); opacity: 1; }
+  100% { transform: rotate(420deg) scale(0.25) translateY(50px); opacity: 0; }
+}
+
+.ko-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.ko-overlay.hidden {
+  display: none;
+}
+
+.ko-text {
+  font-family: 'Cinzel', serif;
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  text-shadow: 0 0 24px var(--danger);
+  opacity: 0;
+}
+
+.ko-overlay.play .ko-text {
+  animation: koPunch 0.5s ease-out forwards;
+}
+
+@keyframes koPunch {
+  0% { transform: scale(3); opacity: 0; }
+  50% { transform: scale(0.9); opacity: 1; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
 }
