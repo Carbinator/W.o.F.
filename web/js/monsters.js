@@ -2,7 +2,7 @@
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
  * 6 Familien (Punkt 15 Schritt 12): Squat Goblin, Pusher Demon, Dumplings,
- * Creatures, Killer Kebab Snakes, Knödel. Die Übungen waren im HANDOVER
+ * Burger, Killer Kebab Snakes, Knödel. Die Übungen waren im HANDOVER
  * mit "evtl." vorgeschlagen — hier übernommen, da thematisch stimmig
  * (Punkt 5.2 explizit: "Übung/Namen bitte thematisch stimmig zuordnen").
  * Die offenen Fragen aus Punkt 11 sind geklärt: Battering Ram ist nur
@@ -77,13 +77,13 @@ const WoFMonsters = (() => {
     },
     creatures: {
       id: 'creatures',
-      name: 'Creatures',
+      name: 'Burger',
       uebung: 'Burpees',
       einheit: 'reps',
       bonusStat: 'ausdauer',
       stufen: baueStufen(
         'creatures', 'Burpees', 'ausdauer',
-        ['Creature-Junges', 'Creature-Kriecher', 'Creature-Zerrer', 'Creature-Schlinger', 'Creature-Urwesen'],
+        ['Burger-Krümel', 'Cheeseburger', 'Doppel-Patty', 'Feuer-Burger', 'Burger-Koloss'],
         STANDARD_PROGRESSION
       ),
     },
@@ -277,35 +277,110 @@ const WoFMonsters = (() => {
     `;
   }
 
-  // Amorphe Kreatur mit einem großen Auge und Tentakel-Armen.
+  // Burger-Monster (User-Rückmeldung: "Die Kreaturen sind eigentlich
+  // Burger" — internes familyId "creatures"/Übung/Bonus-Stat bleiben
+  // unverändert, nur Aussehen + Anzeige-Namen wurden umgestellt). Belag
+  // wächst mit der Stufe: ab Cheeseburger Käse, ab Doppel-Patty 2 Patties
+  // + Salat, ab Feuer-Burger Tomate, ab Burger-Koloss 3 Patties + Flammen.
   function renderCreature(stufe) {
-    const farben = ['#5a3a8a', '#6a2a9a', '#7a1aa8', '#8a10b0', '#a008c0'];
-    const namen = FAMILIEN.creatures.stufen;
     const idx = stufe - 1;
-    const farbe = farben[idx];
     const g = groesseFuer(stufe);
+    const namen = FAMILIEN.creatures.stufen;
     const cx = 80;
-    const cy = 120;
+
+    const pattyAnzahl = [1, 1, 2, 2, 3][idx];
+    const hatKaese = stufe >= 2;
+    const hatSalat = stufe >= 3;
+    const hatTomate = stufe >= 4;
+    const hatFlamme = stufe >= 5;
+
+    const bunFarben = ['#e8c888', '#e0bc78', '#d8b068', '#c89858', '#a87840'];
+    const pattyFarben = ['#7a4a28', '#6a3a20', '#5a2e18', '#4a2412', '#3a1a0a'];
+    const bunFarbe = bunFarben[idx];
+    const pattyFarbe = pattyFarben[idx];
+
+    const breite = 38 * g;
+    const pattyDicke = 9 * g;
+    const pattyAbstand = 15 * g;
+
+    // Patty-Stapel um die Canvas-Mitte (cy=120) herum aufbauen; je mehr
+    // Patties, desto tiefer reicht der Stapel nach unten.
+    const pattyStartCy = 114;
+    const pattyCys = [];
+    for (let p = 0; p < pattyAnzahl; p++) pattyCys.push(pattyStartCy + p * pattyAbstand);
+    const unterstesPattyCy = pattyCys[pattyCys.length - 1];
+    const unterBunCy = unterstesPattyCy + pattyAbstand;
+    const oberBunCy = pattyStartCy - pattyAbstand * 0.9;
+
+    const pattySchichten = pattyCys
+      .map((py) => `<ellipse cx="${cx}" cy="${py}" rx="${breite - 3 * g}" ry="${pattyDicke}" fill="${pattyFarbe}"/>`)
+      .join('');
+
+    const kaeseHtml = hatKaese
+      ? `<path d="M ${cx - breite + 2 * g} ${pattyStartCy - pattyDicke}
+                 Q ${cx - breite * 0.4} ${pattyStartCy - pattyDicke + 10 * g} ${cx - breite * 0.1} ${pattyStartCy - pattyDicke}
+                 Q ${cx + breite * 0.3} ${pattyStartCy - pattyDicke + 9 * g} ${cx + breite - 2 * g} ${pattyStartCy - pattyDicke}
+                 L ${cx + breite - 2 * g} ${pattyStartCy - pattyDicke - 8 * g}
+                 L ${cx - breite + 2 * g} ${pattyStartCy - pattyDicke - 8 * g} Z" fill="#f0c020"/>`
+      : '';
+
+    const salatCy = oberBunCy + 8 * g;
+    const salatHtml = hatSalat
+      ? `<path d="M ${cx - breite - 6 * g} ${salatCy + 4 * g}
+                 Q ${cx - breite * 0.4} ${salatCy - 8 * g} ${cx} ${salatCy}
+                 Q ${cx + breite * 0.4} ${salatCy - 8 * g} ${cx + breite + 6 * g} ${salatCy + 4 * g}
+                 L ${cx + breite + 4 * g} ${salatCy + 12 * g}
+                 Q ${cx} ${salatCy + 4 * g} ${cx - breite - 4 * g} ${salatCy + 12 * g} Z" fill="#5a9a3a"/>`
+      : '';
+
+    const tomateHtml = hatTomate
+      ? `<circle cx="${cx - breite - 3 * g}" cy="${unterstesPattyCy}" r="${6 * g}" fill="#c0301a"/>
+         <circle cx="${cx + breite + 3 * g}" cy="${unterstesPattyCy}" r="${6 * g}" fill="#c0301a"/>`
+      : '';
+
+    let sesam = '';
+    for (let i = 0; i < 5; i++) {
+      const sx = cx - breite * 0.6 + (i * (breite * 1.2)) / 4;
+      sesam += `<ellipse cx="${sx.toFixed(1)}" cy="${(oberBunCy - 8 * g).toFixed(1)}" rx="${2 * g}" ry="${1.2 * g}" fill="#fff6dc"/>`;
+    }
+
+    const flammeHtml = hatFlamme
+      ? `<g stroke="#ff8020" stroke-width="${2.4 * g}" fill="none" opacity="0.85">
+           <path d="M ${cx - 16 * g} ${oberBunCy - 14 * g} Q ${cx - 22 * g} ${oberBunCy - 28 * g} ${cx - 14 * g} ${oberBunCy - 40 * g}"/>
+           <path d="M ${cx + 16 * g} ${oberBunCy - 14 * g} Q ${cx + 22 * g} ${oberBunCy - 28 * g} ${cx + 14 * g} ${oberBunCy - 40 * g}"/>
+         </g>`
+      : '';
+
+    const gesichtCy = pattyStartCy;
 
     return `
       <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
-        <g fill="${farbe}">
-          <!-- Tentakel -->
-          <path d="M ${cx - 30 * g} ${cy + 10 * g} Q ${cx - 55 * g} ${cy + 30 * g} ${cx - 40 * g} ${cy + 60 * g}
-                   Q ${cx - 34 * g} ${cy + 40 * g} ${cx - 20 * g} ${cy + 20 * g} Z"/>
-          <path d="M ${cx + 30 * g} ${cy + 10 * g} Q ${cx + 55 * g} ${cy + 30 * g} ${cx + 40 * g} ${cy + 60 * g}
-                   Q ${cx + 34 * g} ${cy + 40 * g} ${cx + 20 * g} ${cy + 20 * g} Z"/>
-          <!-- Blob-Körper (unregelmäßig) -->
-          <path d="M ${cx} ${cy - 46 * g}
-                   Q ${cx + 42 * g} ${cy - 40 * g} ${cx + 38 * g} ${cy + 10 * g}
-                   Q ${cx + 34 * g} ${cy + 48 * g} ${cx} ${cy + 46 * g}
-                   Q ${cx - 34 * g} ${cy + 48 * g} ${cx - 38 * g} ${cy + 10 * g}
-                   Q ${cx - 42 * g} ${cy - 40 * g} ${cx} ${cy - 46 * g} Z"/>
+        ${flammeHtml}
+        <!-- Arm-Krümel seitlich am unteren Brötchen -->
+        <g fill="${bunFarbe}">
+          <ellipse cx="${cx - breite - 8 * g}" cy="${unterBunCy - 4 * g}" rx="${7 * g}" ry="${10 * g}" transform="rotate(-25 ${cx - breite - 8 * g} ${unterBunCy - 4 * g})"/>
+          <ellipse cx="${cx + breite + 8 * g}" cy="${unterBunCy - 4 * g}" rx="${7 * g}" ry="${10 * g}" transform="rotate(25 ${cx + breite + 8 * g} ${unterBunCy - 4 * g})"/>
         </g>
-        <!-- Großes Auge -->
-        <circle cx="${cx}" cy="${cy - 4 * g}" r="${16 * g}" fill="#e8f0d0"/>
-        <circle cx="${cx}" cy="${cy - 4 * g}" r="${8 * g}" fill="#14100c"/>
-        <circle cx="${cx + 3 * g}" cy="${cy - 7 * g}" r="${2.5 * g}" fill="#fff"/>
+        <!-- Unteres Brötchen -->
+        <ellipse cx="${cx}" cy="${unterBunCy}" rx="${breite}" ry="${9 * g}" fill="${bunFarbe}"/>
+        <!-- Patty(s), Tomate, Käse, Salat -->
+        ${pattySchichten}
+        ${tomateHtml}
+        ${kaeseHtml}
+        ${salatHtml}
+        <!-- Oberes Brötchen (Kuppel) mit Sesam -->
+        <ellipse cx="${cx}" cy="${oberBunCy}" rx="${breite - 2 * g}" ry="${13 * g}" fill="${bunFarbe}"/>
+        ${sesam}
+        <!-- Böses Gesicht auf dem obersten Patty -->
+        <g fill="#f0d840">
+          <circle cx="${cx - 9 * g}" cy="${gesichtCy}" r="${3 * g}"/>
+          <circle cx="${cx + 9 * g}" cy="${gesichtCy}" r="${3 * g}"/>
+        </g>
+        <g fill="#14100c">
+          <circle cx="${cx - 9 * g}" cy="${gesichtCy}" r="${1.3 * g}"/>
+          <circle cx="${cx + 9 * g}" cy="${gesichtCy}" r="${1.3 * g}"/>
+        </g>
+        <path d="M ${cx - 7 * g} ${gesichtCy + 8 * g} Q ${cx} ${gesichtCy + 3 * g} ${cx + 7 * g} ${gesichtCy + 8 * g}" stroke="#2a1608" stroke-width="${2 * g}" fill="none"/>
       </svg>
     `;
   }
