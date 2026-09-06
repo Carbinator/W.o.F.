@@ -2,10 +2,10 @@
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
  * Erste Iteration: nur die Familie "Squat Goblin" (5 Stufen).
- * Weitere Familien folgen in Punkt 15 Schritt 12 — dort auch die
- * offenen Fragen aus Punkt 11 (Battering Ram / Nevill, Klimmzüge)
- * klären, BEVOR neue Familien/Bosse gebaut werden. Squat Goblin
- * betrifft keine der offenen Fragen (Kniebeugen, keine Utensilien).
+ * Weitere Familien folgen in Punkt 15 Schritt 12. Die offenen Fragen aus
+ * Punkt 11 sind geklärt: Battering Ram ist nur noch ein Boss (kein
+ * Mob-Familien-Duplikat mehr, siehe 11.1), Klimmzüge bleiben draußen,
+ * Ersatz ist Split Squats (siehe 11.2).
  */
 
 const WoFMonsters = (() => {

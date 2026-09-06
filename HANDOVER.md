@@ -114,7 +114,6 @@ Aktuell konzipiert (Übung/Namen bitte thematisch stimmig zuordnen):
 | Creatures | ? (evtl. Ganzkörper: Burpees) | ausdauer |
 | Killer Kebab Snakes | ? (evtl. Rotation: Russian Twists) | beweglichkeit |
 | Knödel | ? (evtl. Rolling Ab: Hollow Body Rocks) | willenskraft |
-| Battering Rams | ? (evtl. Sprint-Intervalle) | ausdauer |
 
 **Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahme:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
@@ -136,7 +135,8 @@ Alle Bosse erst ab Char-Lvl 10 spawnbar. Nach Sieg: Cooldown, danach kann dersel
 - Chap the Fruit Monk (Chili → Burpees)
 - Jack the 2nd Fruit Monk (Koloss → Heavy Squats/Lunges)
 - Le Tofu Bunnay (Kaninchen → Springseil / Jump Squats)
-- Nevill / Sugartooth Devil (**OFFENE FRAGE — siehe Punkt 11**)
+- Battering Ram (Ramme mit Zuckerdiamant-Zähnen; Wächter des Buttercup Palace — Vorschlag: Sprint-Intervalle als Signature-Move, Details bei Boss-Umsetzung in Schritt 13)
+- Sugartooth Devil (eigenständiges Wesen, losgelöst von Battering Ram — Konzept/Übung noch offen, kommt in einer späteren Content-Runde dazu)
 
 **Große Endbosse (48h Cooldown):**
 - Sugarking Kane (Multi-Phasen-Kampf, Full-Body: Squats + Push-Ups + Plank)
@@ -292,27 +292,19 @@ Alle Übungen müssen draußen ohne Ausrüstung machbar sein.
 - **Mobility:** Bear Crawls, Crab Walks, Deep Squat Hold, Cat-Cow, World's Greatest Stretch
 - **Willenskraft (Zeit-halten):** Plank (Sekunden), Wall Sit, Hollow Body Hold
 
-**AUSDRÜCKLICH RAUS:** Deadlifts, Kettlebell-Übungen, Klimmzüge (siehe Punkt 11), Bankdrücken, alles mit Gewichten.
+**AUSDRÜCKLICH RAUS:** Deadlifts, Kettlebell-Übungen, Klimmzüge (siehe Punkt 11.2 — endgültig raus, Ersatz: Split Squats), Bankdrücken, alles mit Gewichten.
 
 ## 11. Offene Design-Fragen (VOR Implementation klären!)
 
-### 11.1 Nevill / Sugartooth Devil vs. Battering Ram
+### 11.1 Nevill / Sugartooth Devil vs. Battering Ram — ✅ GEKLÄRT
 
-Im Carbcore-Bestiarium ist Nevill selbst ein "Battering Ram (Ramme) mit Zuckerdiamant-Zähnen; Wächter des Buttercup Palace".
+**Entscheidung (2026-09-06):** Es gibt nur **eine** Kreatur, keine Mob-Familie + separaten Boss mehr. Sie heißt schlicht **Battering Ram** und ist ausschließlich ein mittlerer Boss (24h Cooldown). Die geplante häufig-spawnende "Battering Rams"-Familie aus Punkt 5.2 entfällt ersatzlos — das war dieselbe Kreatur.
 
-Der User will jetzt gleichzeitig:
-- Nevill / Sugartooth Devil als **mittleren Boss** (24h Cooldown)
-- **Battering Ram** als **häufig spawnende Mob-Familie**
+Der Name "Sugartooth Devil" ist NICHT weggefallen, sondern für ein eigenständiges, später hinzuzufügendes Wesen reserviert (siehe Punkt 5.3 Mittlere Bosse) — das braucht noch eigenes Konzept/Übung und ist nicht Teil dieser Klärung.
 
-Der User hat die naive Interpretation "Nevill = benannter Boss, Battering Ram = generische Familie" abgelehnt ("Nein"), aber keine alternative Definition geliefert.
+### 11.2 Klimmzüge (Pull-Ups) — ✅ GEKLÄRT
 
-→ **MUSS mit dem User geklärt werden bevor Boss-System gebaut wird.**
-
-### 11.2 Klimmzüge (Pull-Ups)
-
-Grundsätzlich nur Bodyweight-Übungen ohne Utensilien. Klimmzüge brauchen eine Stange (in vielen Parks vorhanden, aber nicht überall).
-
-→ **User-Entscheidung offen ob drin oder raus.**
+**Entscheidung (2026-09-06):** Klimmzüge bleiben draußen (endgültig, nicht nur vorläufig). Als Ersatz für Content, der Klimmzüge genutzt hätte: **Split Squats** (bereits Teil des Bodyweight-Katalogs in Punkt 10, keine Utensilien nötig).
 
 ## 12. APK-Bau (Kontext vom Bekannten)
 
@@ -365,7 +357,7 @@ Für die App selbst: Der Spieler ist **nicht** Carbinator sondern ein eigener Ch
 10. **Combo-System + Effekte** (Impact-Stern, Screen-Shake, Damage-Numbers)
 11. **Skilltree + Talents**
 12. **Weitere Monster-Familien** (bis alle aus Liste)
-13. **Einzigartige Bosse** (nach Klärung Nevill/Battering Ram)
+13. **Einzigartige Bosse** (Nevill/Battering-Ram-Frage geklärt — siehe Punkt 11.1; Sugartooth Devil ist ein eigenständiges, noch zu konzipierendes Wesen für diesen Schritt)
 14. **Sensor-Integration** für Special-Kämpfe (Zucker-Hydra)
 15. **APK-Vorbereitung** (Icons, Manifest, WebView-Kompatibilität)
 
