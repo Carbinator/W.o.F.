@@ -345,9 +345,11 @@
     el('training-form').addEventListener('submit', onTrainingSubmit);
   }
 
+  let trainingWirdEingetragen = false; // Sperre gegen Doppel-Tap auf "Eintragen"
+
   function onTrainingSubmit(evt) {
     evt.preventDefault();
-    if (!character) return;
+    if (!character || trainingWirdEingetragen) return;
 
     const eingabe = {
       typ: el('training-typ').value,
@@ -359,6 +361,11 @@
       alert('Bitte eine Dauer von mindestens 5 Minuten angeben.');
       return;
     }
+
+    // Sperre erst NACH der Validierung setzen — ein Doppel-Tap auf eine
+    // ungültige Eingabe (die eh nichts einträgt) soll nicht 500ms blocken.
+    trainingWirdEingetragen = true;
+    setTimeout(() => { trainingWirdEingetragen = false; }, 500);
 
     const { belohnung, levelUps } = WoFFreiesTraining.abschliessen(character, eingabe);
 

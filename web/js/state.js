@@ -321,22 +321,34 @@ const WoFState = (() => {
     const letzter = character.streak.lastTrainingDate;
     if (!letzter) {
       character.streak.count = 1;
+      character.streak.lastTrainingDate = heute;
+      return;
+    }
+
+    const diff = tageDifferenz(letzter, heute);
+    if (diff < 0) {
+      // Lokales Datum ist gegenüber dem letzten Trainingstag zurück-
+      // gesprungen (Zeitzonenwechsel Richtung Westen, oder eine Uhr, die
+      // sich kurz vertan hatte und sich korrigiert). uebersprungeneTage
+      // wäre hier negativ und damit IMMER <= grace — die Streak würde
+      // sonst fälschlich hochgezählt UND lastTrainingDate rückwirkend
+      // verfälscht. Stattdessen: Streak unangetastet lassen und das
+      // spätere, vertrauenswürdigere Datum nicht überschreiben.
+      return;
+    }
+    if (diff === 0) {
+      // schon heute trainiert, Streak bleibt
+    } else if (diff === 1) {
+      character.streak.count += 1;
     } else {
-      const diff = tageDifferenz(letzter, heute);
-      if (diff === 0) {
-        // schon heute trainiert, Streak bleibt
-      } else if (diff === 1) {
+      // Streak-Grace (Punkt 5.6 + 4.6): Talent "Beständigkeit" erlaubt
+      // X übersprungene Tage, ohne dass die Streak zurückgesetzt wird.
+      const grace = berechneTalentBoni(character).streakGrace;
+      const uebersprungeneTage = diff - 1;
+      if (uebersprungeneTage <= grace) {
         character.streak.count += 1;
       } else {
-        // Streak-Grace (Punkt 5.6 + 4.6): Talent "Beständigkeit" erlaubt
-        // X übersprungene Tage, ohne dass die Streak zurückgesetzt wird.
-        const grace = berechneTalentBoni(character).streakGrace;
-        const uebersprungeneTage = diff - 1;
-        if (uebersprungeneTage <= grace) {
-          character.streak.count += 1;
-        } else {
-          character.streak.count = 1;
-        }
+        character.streak.count = 1;
       }
     }
     character.streak.lastTrainingDate = heute;

@@ -61,6 +61,16 @@ const WoFCombat = (() => {
     return Math.min(0.5, zusatzAnteil * 0.5);
   }
 
+  // Der XP-Bonus aus ueberperformanceFaktor sättigt bei reps=2*ziel (dann
+  // ist der +50%-Deckel erreicht). statBetrag hing bisher direkt und OHNE
+  // Deckel an reps — seit der Rep-Counter nicht mehr bei repZiel anschlägt
+  // (Fix für den toten Überperformance-Bonus), ließe sich Stat-Wachstum
+  // sonst durch stures Weiterklicken beliebig aufblähen. Gleicher Deckel
+  // wie bei der XP, damit Überperformance belohnt wird, aber begrenzt bleibt.
+  function effektiveRepsFuerStat(reps, ziel) {
+    return Math.min(reps, ziel * 2);
+  }
+
   function lootWuerfeln(stufe, lootChanceBonus) {
     // Normale Monster: 20-60% Chance je nach Level (Punkt 5.4), linear über 5 Stufen.
     // Talent-Ast "Beute" (Punkt 4.6) legt bis zu +20% obendrauf.
@@ -130,7 +140,7 @@ const WoFCombat = (() => {
     const xp = monster.xpBasis * klassenBonus * talentMultiplikator * ueberperformung;
     const gold = monster.goldBasis * streakMultiplikator;
 
-    const statBetrag = Math.max(1, Math.floor(reps / 5));
+    const statBetrag = Math.max(1, Math.floor(effektiveRepsFuerStat(reps, monster.repZiel) / 5));
     const loot = lootWuerfeln(monster.stufe, talentBoni.lootChanceBonus);
 
     return { xp, gold, statBetrag, stat: monster.bonusStat, loot, klassenBonusAktiv: klassenBonus > 1 };
@@ -231,6 +241,8 @@ const WoFCombat = (() => {
       sensorStop: null,
       sensorStartZeit: null,
       sensorIntervalId: null,
+      sensorAnfrageLaeuft: false,
+      phasenUebergangLaeuft: false,
     };
 
     el('combat-monster-name').textContent = monster.name;
@@ -254,6 +266,8 @@ const WoFCombat = (() => {
       sensorStop: null,
       sensorStartZeit: null,
       sensorIntervalId: null,
+      sensorAnfrageLaeuft: false,
+      phasenUebergangLaeuft: false,
     };
 
     el('combat-monster-name').textContent = boss.name;
@@ -322,12 +336,20 @@ const WoFCombat = (() => {
       stoppeSensor();
       return;
     }
+    // Ohne diese Sperre könnte ein zweiter Klick/Touch VOR Auflösung des
+    // await unten hier nochmal reinlaufen (sensorStop ist ja erst NACH
+    // dem await gesetzt) und einen zweiten, nicht mehr referenzierbaren
+    // devicemotion-Listener + Interval erzeugen (Leak: jede Bewegung
+    // würde repPlus() doppelt auslösen).
+    if (aktuellerKampf.sensorAnfrageLaeuft) return;
     if (!WoFSensor.istVerfuegbar()) {
       alert('Dieses Gerät hat keinen Bewegungssensor. Zähle einfach manuell weiter.');
       return;
     }
+    aktuellerKampf.sensorAnfrageLaeuft = true;
     const erlaubt = await WoFSensor.anfragenBerechtigung();
     if (!aktuellerKampf) return; // Kampf könnte während der Anfrage beendet worden sein (z.B. geflohen)
+    aktuellerKampf.sensorAnfrageLaeuft = false;
     if (!erlaubt) {
       alert('Sensor-Zugriff wurde nicht erlaubt. Du kannst trotzdem manuell weiterzählen.');
       return;
@@ -485,6 +507,7 @@ const WoFCombat = (() => {
 
   function fertig() {
     if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
+    if (aktuellerKampf.phasenUebergangLaeuft) return; // Doppel-Klick während des Phasenwechsels ignorieren
     const { reps, aktuellePhase } = aktuellerKampf;
     if (reps < aktuellePhase.repZiel) return;
 
@@ -521,7 +544,7 @@ const WoFCombat = (() => {
   // oder — bei der letzten Phase — die volle K.O.-Sequenz + Belohnung.
   function fertigBossPhase() {
     const { character, aktuellePhase, reps, boss, phaseIndex, onClose } = aktuellerKampf;
-    const statBetrag = Math.max(1, Math.floor(reps / 5));
+    const statBetrag = Math.max(1, Math.floor(effektiveRepsFuerStat(reps, aktuellePhase.repZiel) / 5));
     WoFState.statErhoehen(character, aktuellePhase.bonusStat, statBetrag);
     aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] =
       (aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] || 0) + statBetrag;
@@ -530,6 +553,7 @@ const WoFCombat = (() => {
     stoppeSensor(); // pro Phase neu aktivieren (neue Übung, neue Bewegung)
 
     if (!istLetztePhase) {
+      aktuellerKampf.phasenUebergangLaeuft = true; // gegen doppelt gefeuerte Klicks/Touch-Events
       el('combat-controls').classList.add('hidden');
       zeigePopupText(`Phase ${phaseIndex + 1} geschafft!`);
       setTimeout(() => {
@@ -538,6 +562,7 @@ const WoFCombat = (() => {
         aktuellerKampf.aktuellePhase = boss.phasen[aktuellerKampf.phaseIndex];
         aktuellerKampf.reps = 0;
         aktuellerKampf.combo = { anzahl: 0, letzterKlick: 0 };
+        aktuellerKampf.phasenUebergangLaeuft = false;
         aktualisierePhaseIndikator();
         aktualisiereExerciseUI();
         aktualisiereCounter();
