@@ -61,6 +61,30 @@ const WoFState = (() => {
 
   const STATS = ['kraft', 'muskelaufbau', 'ausdauer', 'beweglichkeit', 'willenskraft'];
 
+  // Eigener Wochenplan (Ergänzung vom 2026-09-06, User-Wunsch): pro
+  // Wochentag ein Trainings-Typ aus WoFFreiesTraining.TYPEN hinterlegbar,
+  // oder null/'' für Ruhetag. Rein ein Vorschlag fürs Trainings-Formular —
+  // kein Zwang, an keinem Tag blockiert die App irgendetwas.
+  const WOCHENTAGE = [
+    { key: 'mo', label: 'Montag' },
+    { key: 'di', label: 'Dienstag' },
+    { key: 'mi', label: 'Mittwoch' },
+    { key: 'do', label: 'Donnerstag' },
+    { key: 'fr', label: 'Freitag' },
+    { key: 'sa', label: 'Samstag' },
+    { key: 'so', label: 'Sonntag' },
+  ];
+
+  function heutigerWochentagKey() {
+    // Date.getDay(): 0=So, 1=Mo, ..., 6=Sa
+    return ['so', 'mo', 'di', 'mi', 'do', 'fr', 'sa'][new Date().getDay()];
+  }
+
+  function setzeWochenplanTag(character, tag, typ) {
+    if (!character.wochenplan) character.wochenplan = {};
+    character.wochenplan[tag] = typ || null;
+  }
+
   // Skilltree (Punkt 4.6): "Konkrete Skilltree-Inhalte kann Claude Code
   // selbst entwerfen" — eigenes Design. 3 Äste x 3 Stufen pro Klasse,
   // mechanisch identisch über alle Klassen (nur Namen unterscheiden sich),
@@ -181,6 +205,11 @@ const WoFState = (() => {
         character.trainingsLog = [];
         migriert = true;
       }
+      // Migration: Spielstände von vor dem Wochenplan.
+      if (!character.wochenplan) {
+        character.wochenplan = {};
+        migriert = true;
+      }
 
       // Migrierte Felder sofort zurückschreiben — sonst stehen sie nur im
       // Arbeitsspeicher, bis irgendeine andere Aktion ohnehin speichert.
@@ -252,6 +281,7 @@ const WoFState = (() => {
       besiegteMonster: [],
       bossCooldowns: {},
       trainingsLog: [],
+      wochenplan: {},
 
       // Energie-System (Punkt 5.5-Erweiterung): sinkt durchs Trainieren,
       // regeneriert über echte Zeit. Kein Blocker fürs Weiterspielen —
@@ -485,5 +515,8 @@ const WoFState = (() => {
     energieFuerKampfVerbrauchen,
     buffsNachKampfAktualisieren,
     protokolliere,
+    WOCHENTAGE,
+    heutigerWochentagKey,
+    setzeWochenplanTag,
   };
 })();

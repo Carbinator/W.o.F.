@@ -308,6 +308,15 @@ Der Spieler kann auch ohne Monster Training eintragen:
 
 **Wichtig:** Beides existiert parallel (Variante B aus früherer Diskussion). Monster sind Anreiz, freies Training bleibt die Basis.
 
+### 9.1 Eigener Wochenplan (eigene Ergänzung vom 2026-09-06, im HANDOVER nicht spezifiziert)
+
+**Entscheidung:** User-Frage: "Ist das so, dass man da auch seinen eigenen Trainingsplan integrieren [kann]?" — Rückfrage ergab: ein einfacher Wochenplan reicht (kein voller Sätze/Wiederholungen/Gewichte-Tracker).
+
+- `character.wochenplan`: Objekt mit den 7 Wochentag-Kürzeln (`mo`...`so`) als Keys, Wert ist ein Typ-Key aus `WoFFreiesTraining.TYPEN` oder `null`/leer für Ruhetag.
+- Editierbar im Training-Tab unter "Mein Wochenplan": 7 Dropdowns, einer pro Tag.
+- Beim Öffnen des Training-Tabs zeigt ein Hinweis "Laut Plan ist heute dran: ..." und wählt den passenden Typ im Formular automatisch vor — bleibt aber jederzeit manuell änderbar, reiner Vorschlag statt Zwang (konsistent mit dem restlichen No-Defeat/No-Blocker-Design).
+- `state.js`: `WoFState.WOCHENTAGE`, `WoFState.heutigerWochentagKey()`, `WoFState.setzeWochenplanTag(character, tag, typ)`.
+
 ## 10. Content: Bodyweight-Übungen (keine Utensilien!)
 
 Alle Übungen müssen draußen ohne Ausrüstung machbar sein.

@@ -385,6 +385,32 @@ h1, h2, h3 {
   background: var(--bg-panel);
 }
 
+.wochenplan-tage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.8rem 0 1.5rem;
+}
+
+.wochenplan-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.wochenplan-tag select {
+  background: var(--bg-panel);
+  border: 1px solid #3a2f22;
+  color: var(--text);
+  padding: 0.35rem;
+  border-radius: 6px;
+  font-family: inherit;
+  flex: 0 0 auto;
+}
+
 /* ---- Talente ---- */
 
 #view-talente {

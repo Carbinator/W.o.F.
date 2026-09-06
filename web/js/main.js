@@ -27,7 +27,10 @@
         zeigeView(btn.dataset.view);
         if (btn.dataset.view === 'held') renderHeldTab();
         if (btn.dataset.view === 'talente') renderTalenteTab();
-        if (btn.dataset.view === 'training') aktualisiereTrainingsplatzHinweis();
+        if (btn.dataset.view === 'training') {
+          aktualisiereTrainingsplatzHinweis();
+          aktualisiereTrainingsplanHinweis();
+        }
       });
     });
   }
@@ -430,6 +433,66 @@
     el('training-form').addEventListener('submit', onTrainingSubmit);
   }
 
+  // ---- Eigener Wochenplan (Ergänzung, User-Wunsch) --------------------------
+  // Pro Wochentag ein Trainings-Typ als Vorschlag hinterlegbar. Rein optional
+  // und niemals ein Zwang — schlägt nur den Typ im Formular vor, der Spieler
+  // kann jederzeit etwas anderes eintragen.
+
+  function initWochenplanUI() {
+    const container = el('wochenplan-tage');
+    WoFState.WOCHENTAGE.forEach(({ key, label }) => {
+      const row = document.createElement('div');
+      row.className = 'wochenplan-tag';
+
+      const beschriftung = document.createElement('span');
+      beschriftung.textContent = label;
+
+      const select = document.createElement('select');
+      select.dataset.tag = key;
+      const ruheOption = document.createElement('option');
+      ruheOption.value = '';
+      ruheOption.textContent = 'Ruhetag / kein Eintrag';
+      select.appendChild(ruheOption);
+      Object.entries(WoFFreiesTraining.TYPEN).forEach(([typKey, info]) => {
+        const opt = document.createElement('option');
+        opt.value = typKey;
+        opt.textContent = info.label;
+        select.appendChild(opt);
+      });
+      select.addEventListener('change', () => {
+        WoFState.setzeWochenplanTag(character, key, select.value);
+        WoFState.speichern(character);
+        aktualisiereTrainingsplanHinweis();
+      });
+
+      row.appendChild(beschriftung);
+      row.appendChild(select);
+      container.appendChild(row);
+    });
+  }
+
+  function fuelleWochenplanUI() {
+    if (!character) return;
+    el('wochenplan-tage').querySelectorAll('select').forEach((select) => {
+      select.value = (character.wochenplan && character.wochenplan[select.dataset.tag]) || '';
+    });
+  }
+
+  function aktualisiereTrainingsplanHinweis() {
+    if (!character) return;
+    const heute = WoFState.heutigerWochentagKey();
+    const heuteLabel = WoFState.WOCHENTAGE.find((t) => t.key === heute).label;
+    const geplant = character.wochenplan && character.wochenplan[heute];
+    const hint = el('training-wochenplan-hint');
+    hint.classList.remove('hidden');
+    if (geplant && WoFFreiesTraining.TYPEN[geplant]) {
+      hint.textContent = `📅 Laut Plan ist heute (${heuteLabel}) dran: ${WoFFreiesTraining.TYPEN[geplant].label} — Typ vorausgewählt.`;
+      el('training-typ').value = geplant;
+    } else {
+      hint.textContent = `📅 Heute (${heuteLabel}) ist laut Plan Ruhetag / nichts eingetragen.`;
+    }
+  }
+
   // Punkt 7.2: Auto-Erkennung anhand der echten, per Overpass geladenen
   // Trainingsplätze — setzt die Checkbox nur als Vorschlag, der Spieler
   // kann sie trotzdem manuell umschalten (Overpass-Daten sind nicht immer
@@ -496,6 +559,7 @@
     el('app-header').classList.remove('hidden');
     zeigeView('karte');
     renderHeldTab();
+    fuelleWochenplanUI();
     WoFMap.init('map', character, {
       onFightEnded: () => {
         WoFState.speichern(character);
@@ -511,6 +575,7 @@
     initSoundToggle();
     initEditorStatischeFelder();
     initTrainingForm();
+    initWochenplanUI();
     el('editor-form').addEventListener('submit', onEditorSubmit);
     el('editor-cancel-btn').addEventListener('click', () => zeigeView('held'));
     el('held-edit-btn').addEventListener('click', () => starteEditor('bearbeiten'));

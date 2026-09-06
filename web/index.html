@@ -122,6 +122,7 @@
       <section id="view-training" class="view hidden">
         <h2>Freies Training</h2>
         <p class="field-hint">Training ohne Monster — der Anreiz sind die Monster, die Basis bleibt dein Training.</p>
+        <p id="training-wochenplan-hint" class="field-hint hidden"></p>
         <form id="training-form" class="training-form">
           <label>
             Typ
@@ -143,6 +144,10 @@
           <button type="submit" class="btn-primary">Eintragen</button>
         </form>
         <div id="training-result" class="training-result hidden"></div>
+
+        <h3>Mein Wochenplan</h3>
+        <p class="field-hint">Leg pro Tag einen Trainings-Typ fest — die App schlägt ihn dir dann automatisch vor (änderbar bleibt es trotzdem).</p>
+        <div id="wochenplan-tage" class="wochenplan-tage"></div>
       </section>
 
       <section id="view-talente" class="view hidden">
