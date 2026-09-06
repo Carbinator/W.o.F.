@@ -219,7 +219,7 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-panel);
+  background: #4a4442;
   border: 1px solid #3a2f22;
   border-radius: 10px;
   padding: 1rem;
@@ -477,6 +477,13 @@ h1, h2, h3 {
 
 #held-avatar {
   flex: 0 0 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a4442;
+  border: 1px solid #3a2f22;
+  border-radius: 10px;
+  padding: 1rem;
 }
 
 #held-info {
