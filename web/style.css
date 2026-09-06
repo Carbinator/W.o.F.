@@ -1,0 +1,440 @@
+/* style.css — Dark-Fantasy-Ästhetik (Punkt 3 aus HANDOVER.md) */
+
+:root {
+  --bg-dark: #0a0806;
+  --bg-panel: #14100c;
+  --gold: #d4a44a;
+  --gold-bright: #e8c878;
+  --text: #ece4d4;
+  --text-dim: #a89880;
+  --danger: #c0402a;
+  --success: #4a8a3a;
+  font-family: 'Crimson Pro', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: radial-gradient(ellipse at top, var(--bg-panel), var(--bg-dark));
+  color: var(--text);
+}
+
+h1, h2, h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  margin: 0.4em 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--gold);
+  background: var(--bg-panel);
+}
+
+.app-title {
+  letter-spacing: 0.15em;
+}
+
+#app-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--text);
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Crimson Pro', sans-serif;
+}
+
+.nav-btn.active {
+  background: var(--gold);
+  color: var(--bg-dark);
+  font-weight: 600;
+}
+
+#app-main {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.view {
+  height: 100%;
+  padding: 1rem;
+}
+
+/* ---- Editor ---- */
+
+#view-editor {
+  overflow-y: auto;
+}
+
+.editor-layout {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.editor-fields {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.editor-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+}
+
+.editor-fields input[type="text"],
+.editor-fields select {
+  background: var(--bg-panel);
+  border: 1px solid #3a2f22;
+  color: var(--text);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.field-label {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 0.3rem;
+}
+
+.field-hint {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.readonly-info {
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.klasse-optionen {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.klasse-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--bg-panel);
+  border: 2px solid #3a2f22;
+  color: var(--text);
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+.klasse-option.selected {
+  border-color: var(--gold);
+  background: #241c12;
+}
+
+.klasse-emoji {
+  font-size: 1.4rem;
+}
+
+.swatches {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #3a2f22;
+  cursor: pointer;
+}
+
+.swatch.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
+.editor-preview {
+  flex: 0 0 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-panel);
+  border: 1px solid #3a2f22;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.avatar-svg {
+  width: 100%;
+  max-width: 200px;
+}
+
+.avatar-svg svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.editor-actions {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.btn-primary, .btn-secondary, .btn-rep {
+  font-family: 'Cinzel', serif;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border: none;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--bg-dark);
+  font-weight: 700;
+}
+
+.btn-primary:disabled {
+  background: #5a4d33;
+  color: #8a7d63;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+/* ---- Karte ---- */
+
+#view-karte {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-container {
+  flex: 1;
+  filter: sepia(0.6) saturate(1.2) hue-rotate(-15deg);
+}
+
+#settings-bar {
+  padding: 0.5rem 1rem;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--gold);
+  font-size: 0.9rem;
+  filter: none;
+}
+
+.monster-marker-inner {
+  width: 40px;
+  height: 48px;
+}
+
+.player-marker {
+  font-size: 1.4rem;
+}
+
+/* ---- Held ---- */
+
+#view-held {
+  display: flex;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+#held-avatar {
+  flex: 0 0 200px;
+}
+
+#held-info {
+  flex: 1;
+}
+
+.xp-bar {
+  width: 100%;
+  height: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0.4rem 0;
+}
+
+.xp-fill {
+  height: 100%;
+  background: var(--gold);
+}
+
+.held-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.3rem 0 1rem;
+}
+
+.held-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #241c12;
+  text-transform: capitalize;
+}
+
+/* ---- Kampf-Modal ---- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 1.2rem;
+  width: min(520px, 92vw);
+  text-align: center;
+}
+
+.combat-arena {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.combat-fighter, .combat-fighter-wrap {
+  flex: 1;
+}
+
+.combat-fighter svg {
+  width: 100%;
+  max-width: 140px;
+}
+
+.combat-vs {
+  font-family: 'Cinzel', serif;
+  color: var(--danger);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.hp-bar {
+  width: 100%;
+  height: 10px;
+  background: #241c12;
+  border: 1px solid var(--danger);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.4rem;
+}
+
+.hp-fill {
+  height: 100%;
+  background: var(--danger);
+  transition: width 0.2s ease-out;
+}
+
+.exercise-name {
+  font-family: 'Cinzel', serif;
+  color: var(--gold-bright);
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.rep-counter {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0.2rem 0 0.8rem;
+}
+
+.combat-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn-rep {
+  background: var(--danger);
+  color: white;
+  font-size: 1.3rem;
+  padding: 0.8rem 1.6rem;
+  font-weight: 700;
+}
+
+.combat-footer-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.combat-fertig-btn-bereit,
+#combat-fertig-btn.bereit {
+  background: var(--success);
+  color: white;
+}
+
+.combat-result h3 {
+  color: var(--gold-bright);
+  font-size: 1.8rem;
+}
+
+.combat-result .loot {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.combat-result .levelup {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.combat-result .btn-primary {
+  margin-top: 1rem;
+}

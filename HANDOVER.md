@@ -1,0 +1,376 @@
+# WoF — Handover-Dokument für Claude Code (Neuaufbau)
+
+**Kontext:** Diese Datei fasst alle Design-Entscheidungen, Content-Kanon und offenen Fragen zusammen, die in einer vorherigen Chat-Session mit Claude besprochen wurden. Nutze sie als Referenz beim Neuaufbau der App als Client-Only-Web-App.
+
+## 1. Vision & Ziel
+
+**WoF** (World of Fitness) ist eine Fitness-Gamification-App im Stil von Ingress/Pokemon Go, aber im Solo-Modus. Der Spieler bewegt sich real durch seine Umgebung, trifft auf gespawnte Monster und wird durch echtes Training belohnt.
+
+**Kernmechanik:** Monster sind Trigger für Selbsttraining, kein Sammel-Grinding. Der Spieler geht zu einem Monster (30m Reichweite), macht die geforderte Übung selbst, bestätigt die Wiederholungen und bekommt XP + Loot.
+
+**Zielplattform:** Android. Umsetzung als reine Client-Only-Web-App (HTML/CSS/JavaScript, State via localStorage), die später über einen WebView-Wrapper zur APK gebaut wird. Der frühere Bekannte hat dafür ein Android-Studio-Template gebaut (siehe Punkt 12).
+
+**Langfrist-Nordstern: WoF Multiplayer** — Erweiterung der aktuellen Solo-App zum Fitness-MMO mit Fraktionen (Carbinator's Way vs. King Kones) und Ingress-artigem Territorial-System für öffentliche Trainingsplätze. Aktuelle App soll dieses Ziel architekturell nicht verbauen (State-Management sauber trennen), aber nichts davon jetzt implementieren.
+
+## 2. Architektur-Prinzipien
+
+- **Kein Backend, kein Server** — reine Client-Side JavaScript
+- **localStorage** für Spielstand (Charakter, Inventar, besiegte Monster, Streak, Statistiken)
+- **Overpass API** (öffentlich, kein Key) für echte Trainingsplätze im Umkreis
+- **OpenStreetMap Tiles** über Leaflet.js für die Karte
+- **Kein Build-Schritt nötig** — der Bekannte packt die Web-Files direkt als Assets in die APK. Wenn möglich, kein Webpack/Vite/etc.
+- **Kein npm-Ökosystem** wenn vermeidbar — Vanilla JS oder wenige direkt eingebundene Libraries (Leaflet als Script-Tag)
+
+## 3. Ästhetik
+
+- **Dark Fantasy** — dunkler Hintergrund (#0a0806 bis #14100c), Gold-Akzente (#d4a44a)
+- **Fonts:** Cinzel (für Display/Headings), Crimson Pro (für Fließtext), Fallback system-ui
+- **Karten-Tiles:** sepia-getönte OSM-Tiles (CSS filter: sepia + hue-rotate)
+- **Sprache aller Nutzertexte:** Deutsch
+- **Icon-Sprache:** Emojis für Klassen und schnelle visuelle Hinweise, SVGs für aufwendige Artworks
+
+## 4. Charakter-System
+
+### 4.1 Klassen (fest, 4 Stück)
+
+| Key | Name | Beschreibung | Bonus-Stat | Start-Stat-Verteilung |
+|---|---|---|---|---|
+| barbar | Barbar | Roher Kraftsport — Maximalkraft | kraft | Kraft 12, Rest 5-8 |
+| paladin | Paladin | Muskelaufbau / Hypertrophie | muskelaufbau | Muskelaufbau 12, Rest 5-8 |
+| elf | Elf | Beweglichkeit, Yoga, Mobility | beweglichkeit | Beweglichkeit 12, Rest 5-8 |
+| waldlaeufer | Waldläufer | Ausdauer — Laufen, lange Distanzen | ausdauer | Ausdauer 12, Rest 5-8 |
+
+**Nice-to-have später:** 5. Klasse "Mönch/Yogi" mit Bonus-Stat Willenskraft (aktuell hat kein Klassen-Bonus auf Willenskraft).
+
+### 4.2 Stats (5 Stück)
+
+1. **kraft** — Maximalkraft, wird durch schwere Bodyweight-Übungen (Pistol Squats, Handstand) trainiert
+2. **muskelaufbau** — Hypertrophie, Push-Ups, moderate Squats
+3. **ausdauer** — Laufen, HIIT, lange Übungen
+4. **beweglichkeit** — Mobility, Yoga, Dehnen, dynamische Übungen
+5. **willenskraft** — Zeit-Halte-Übungen (Plank, Wall Sit), lange Streaks
+
+Formel für Charakter-Power im Kampf: Summe aller Stats + Ausrüstungs-Boni + Talent-Boni.
+
+### 4.3 Charakter-Editor mit SVG-Avatar
+
+- **Name** (Text, max 24 Zeichen)
+- **Klasse** (siehe 4.1)
+- **Geschlecht:** female / diverse / male (beeinflusst Silhouette/Schultern/Hüfte)
+- **Körperbau:** ecto (schlank) / meso (athletisch) / endo (stämmig) — beeinflusst Breite
+- **Hautton:** 6 Presets (#f5d5b8, #e8b48a, #d19468, #a06a3a, #6b4020, #3a2010)
+- **Haarfarbe:** 10 Presets (#1a1008, #3a2418, #6b4020, #a86828, #d4a44a, #e8dcc0, #c04040, #8a3060, #2050a0, #3d7a3d)
+- **Frisur:** 6 Varianten (kurz, mittel, lang, zopf, dutt, kahl)
+- **Fitness-Startlevel:** 1-5
+
+**Live-Vorschau** des Avatars im Editor. Modularer SVG-Generator der zur Laufzeit aus den Parametern das SVG baut. Avatar wird auch im Held-Tab und im Kampf-Modal angezeigt.
+
+### 4.4 Fitness-Startlevel-Mapping
+
+| Level | Label | Start-Char-Lvl | Stat-Bonus (auf jeden Stat) |
+|---|---|---|---|
+| 1 | Novice | 1 | +0 |
+| 2 | Fortgeschritten | 3 | +5 |
+| 3 | Meister | 6 | +12 |
+| 4 | Super | 10 | +25 |
+| 5 | Ultra | 15 | +45 |
+
+Startet der Spieler höher, gibt es entsprechend Talent-Punkte (char_level - 1).
+
+### 4.5 Klassen-spezifische Erstausstattung
+
+Bei Charakter-Erstellung automatisch ins Inventar + direkt ausgerüstet:
+
+| Klasse | Rüstung | Waffe/Accessoire |
+|---|---|---|
+| Barbar | Wildling-Fell (+3 kraft, +1 ausdauer) | Brechstangen-Faust (+2 kraft) |
+| Paladin | Turnier-Kürass (+3 muskelaufbau, +1 willenskraft) | Trainings-Handschuh (+2 muskelaufbau) |
+| Elf | Läufer-Sandalen (+3 beweglichkeit, +1 ausdauer) | Federleichter Umhang (+2 beweglichkeit) |
+| Waldläufer | Läufer-Tuch (+3 ausdauer, +1 willenskraft) | Trink-Flakon (+2 ausdauer) |
+
+### 4.6 Skilltree
+
+Jede Klasse hat 3 Äste × 3 Stufen (9 Talente pro Klasse). Talent-Punkte kommen bei jedem Level-Up (+1). Talents geben Boni auf: XP-Multiplikator (pro Stat oder generell), Streak-Grace, Loot-Chance, Combat-Damage, Crit-Chance, Streak-Kombat-Multiplikator, etc.
+
+Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Themen-Äste pro Klasse — z.B. Barbar: "Berserker" / "Bulle" / "Prügler").
+
+## 5. Kampfmechanik
+
+### 5.1 Zwei Arten von Gegnern
+
+**A) Häufig-Spawner (Familien mit 5 Stufen)** — spawnen dauerhaft im 500m-Umkreis, respawnen nach Sieg. Jede Familie ist an eine Übung gebunden.
+
+**B) Einzigartige Bosse** — spawnen sporadisch (10-15% Chance beim Weltspawn), erst ab Char-Lvl 10, Cooldown nach Sieg.
+
+### 5.2 Häufig-Spawner-Familien
+
+Aktuell konzipiert (Übung/Namen bitte thematisch stimmig zuordnen):
+
+| Familie | Übung (Vorschlag) | Bonus-Stat |
+|---|---|---|
+| Squat Goblin | Kniebeugen | muskelaufbau |
+| Pusher Demon | Liegestütze | kraft |
+| Dumplings | ? (evtl. weiche Ab-Übungen: Sit-Ups, Crunches) | muskelaufbau |
+| Creatures | ? (evtl. Ganzkörper: Burpees) | ausdauer |
+| Killer Kebab Snakes | ? (evtl. Rotation: Russian Twists) | beweglichkeit |
+| Knödel | ? (evtl. Rolling Ab: Hollow Body Rocks) | willenskraft |
+| Battering Rams | ? (evtl. Sprint-Intervalle) | ausdauer |
+
+**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahme:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
+
+### 5.3 Einzigartige Bosse mit Cooldowns
+
+Alle Bosse erst ab Char-Lvl 10 spawnbar. Nach Sieg: Cooldown, danach kann derselbe wieder auftauchen.
+
+**Kleine Bosse (12h Cooldown):**
+- Cornpop (Popcorn — springt/knallt → Jumping Jacks / Squat Jumps)
+- Marsh the Mallow (weich → Rolling Sit-Ups)
+- Pan Doro (italienischer Kuchen, haust in Höhle → Tiefe Squats)
+- Pasta Busta (Nudel-Gegner, dünn → Cardio-Sprints)
+- Nutcruncher (Karamell-Nuss-Minigun → Boxen/Punches)
+
+**Mittlere Bosse (24h Cooldown):**
+- Fleur the Flourduster (Mehlwolke → HIIT-Sprints)
+- Deniz / Daemoniz (Schlangen-Leech → Superman Holds, Hollow-Body)
+- Nightshade the Carbmaid (Belladonna, Dry-O-Mator → lange Planks)
+- Chap the Fruit Monk (Chili → Burpees)
+- Jack the 2nd Fruit Monk (Koloss → Heavy Squats/Lunges)
+- Le Tofu Bunnay (Kaninchen → Springseil / Jump Squats)
+- Nevill / Sugartooth Devil (**OFFENE FRAGE — siehe Punkt 11**)
+
+**Große Endbosse (48h Cooldown):**
+- Sugarking Kane (Multi-Phasen-Kampf, Full-Body: Squats + Push-Ups + Plank)
+- Vee Gain Le Fay / Firestorm (Spinnenkreatur → komplexer Multi-Phasen-Kampf)
+- Ed the Fat (Fettwesen → Cardio-Marathon)
+- Zuckerhydra (Multi-Kopf → HIIT mit Sensor-basierter Bewegungserkennung)
+
+Boss-Kämpfe sollten mehrphasig sein (2-3 verschiedene Übungen nacheinander) und garantiert Loot geben.
+
+### 5.4 Belohnungssystem
+
+**Bei erfolgreichem Kampf:**
+- **XP** basierend auf Monster-Level (Basis-XP × Klassen-Bonus × Talent-Multiplikator)
+- **Klassen-Bonus:** +25% XP wenn Monster-Stat = Klassen-Bonus-Stat
+- **Überperformance-Bonus:** mehr Reps als nötig → bis zu +50% Basis-XP
+- **Gold** (Basis-Gold + Streak-Multiplikator)
+- **Stat-Erhöhung** (max(1, reps // 5))
+- **Streak-Update** (siehe 5.6)
+
+**Loot-Drop:**
+- Normale Monster: 20-60% Chance je nach Level
+- Boss-Monster: garantierter Loot mit forcierter Rarität "selten+"
+- Rarity-Stufen: gewöhnlich → ungewöhnlich → selten → episch → legendär
+
+### 5.5 Item-System
+
+- **Slots:** armor, weapon, amulet (max 3 gleichzeitig ausgerüstet)
+- **Bonus-Struktur:** dict von Stat → Wert (z.B. `{"kraft": 3, "ausdauer": 1}`)
+- **Rarity** beeinflusst Bonus-Höhe und Anzahl der Stats
+- **Item-Reward-Type** soll erweiterbar sein: `type: "item" | "voucher" | "xp" | "gold"` — für spätere Kooperationen mit Woop/Fitbit/More Nutrition/ESN/McFit als Voucher-Codes
+
+### 5.6 Streak-Mechanik
+
+- **Streak** = aufeinanderfolgende Tage mit mindestens 1 Training
+- Streak steigt bei Training am gleichen Tag oder nächsten Tag
+- **Streak-Grace** (aus Talent) erlaubt X Tage Auszeit ohne Streak-Verlust
+- Streak-Boni: +Gold-Multiplikator, +Combat-Damage im Kampf
+
+## 6. Streetfighter-Kampfsystem
+
+**Ziel:** Vollflächen-Kampf-Overlay der aussieht und sich anfühlt wie ein 90er Streetfighter-Automat.
+
+### 6.1 Layout
+
+- **HUD oben:** HP-Balken beider Kämpfer, Portraits, Namen ("SPIELER" vs "MONSTER"), großes "VS" mittig
+- **Arena mittig:** Split-Screen, Spieler-Avatar links (aus renderAvatar), Monster-SVG rechts
+- **Effekt-Layer** (absolute positioniert): Impact-Sterne, Schadenszahlen, Combo-Popup
+- **Controls unten:** Übungsname, Counter (aktuell/ziel), +/- Buttons (großer roter Plus-Button für "Rep gemacht"), Fliehen + "K.O.!" Erledigt-Button
+
+### 6.2 VS-Intro (~2.6 Sekunden)
+
+1. Namen fliegen von links/rechts rein (perspective transform)
+2. "VS" ploppt in der Mitte mit rotem Text-Shadow und Rotation
+3. "READY?" pulsiert
+4. "FIGHT!" explodiert dramatisch
+5. Klicks sind während der Zeit gesperrt
+
+### 6.3 Attack-Choreografie (pro Rep-Klick)
+
+- Spieler-Avatar schwingt nach vorne (CSS transform: translateX + scale)
+- Boss-SVG zuckt zurück und wackelt (translateX + rotate)
+- Impact-Stern erscheint an Kollisions-Punkt
+- Schadenszahl fliegt hoch mit fade-out
+- Screen-Shake (kurz, knackig)
+- Combo-Counter tracked schnelle Klicks (<1200ms Abstand)
+- Ab 3× Combo: goldener "COMBO x3!"-Popup, goldene Crit-Schadenszahlen
+
+### 6.4 K.O.-Sequenz
+
+- Boss dreht sich rotierend weg (bossKO keyframes)
+- Screen-Shake final
+- Dunkler Overlay
+- Riesen-Cinzel-Text "K.O.!" mit Punch-Animation
+
+### 6.5 Was NOCH FEHLT (Feinschliff für später)
+
+- Sounds via Web Audio API (Hooks vorbereiten, keine Files hier)
+- Special-Moves nach 5er-Combo
+- Boss-Gegenangriffe (aktuell dominiert Spieler komplett — bewusste Design-Entscheidung, weil "vom Fitness-Boss besiegt werden" demotivierend wäre)
+
+## 7. Karten-System
+
+### 7.1 Leaflet + OSM
+
+```js
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 19
+})
+```
+
+CSS-Filter für Sepia-Look: `filter: sepia(0.6) saturate(1.2) hue-rotate(-15deg)`
+
+### 7.2 Overpass-Query für Trainingsplätze
+
+```
+[out:json][timeout:15];
+(
+  node["leisure"="fitness_station"](around:{radius},{lat},{lng});
+  node["sport"="calisthenics"](around:{radius},{lat},{lng});
+  way["leisure"="fitness_centre"](around:{radius},{lat},{lng});
+  way["leisure"="track"](around:{radius},{lat},{lng});
+  node["leisure"="pitch"]["sport"~"soccer|basketball"](around:{radius},{lat},{lng});
+);
+out center;
+```
+
+Ergebnisse als grüne Marker anzeigen. Wenn Spieler ein Training an einem POI absolviert (im 50m-Radius): +20% XP.
+
+### 7.3 Monster-Spawns
+
+- **Spawn-Radius:** 500m um Spieler
+- **Max Monster gleichzeitig:** 6
+- **Interact-Radius:** 30m (Kampf erst startbar wenn in dieser Reichweite)
+- **Spawn-Gewichtung:** niedrige Levels häufiger (Lvl 1 = 10× so wahrscheinlich wie Lvl 4), Bosse sehr selten (1× wenn verfügbar)
+
+### 7.4 Vorführmodus
+
+Aus der alten APK übernehmen: Ein Toggle in den Einstellungen, der die 30m-Reichweiten-Regel deaktiviert. So kann man die App zu Hause auf dem Sofa demonstrieren.
+
+## 8. Sensor-Integration (für Special-Kämpfe)
+
+Aus der alten APK: **DeviceMotionEvent** (Accelerometer) für Bewegungserkennung.
+
+**iOS-Falle:** Ab iOS 13 muss man `DeviceMotionEvent.requestPermission()` explizit aufrufen (nach User-Interaktion, z.B. Button-Klick), sonst kommen keine Daten.
+
+**Nutzung:**
+- **Zucker-Hydra Boss:** HIIT-Modus — Sensor erkennt Sprünge/Squats/Burpees, zählt automatisch, Timer läuft
+- **Alter Kaiser (falls beibehalten):** Kraft-Modus — Sensor erkennt langsame kontrollierte Bewegungen
+
+Nicht bei jedem Kampf nötig — nur als Special-Feature für ausgewählte Bosse.
+
+## 9. Freies Training (parallel zum Monster-System)
+
+Der Spieler kann auch ohne Monster Training eintragen:
+
+- **Typ:** Kraftsport (schwer/mittel/leicht), Cardio, Cross-Fit, Yoga/Mobility, HIIT
+- **Dauer:** in Minuten
+- **Intensität:** Leicht (×0.5) / Mittel (×1.0) / Schwer (×1.5) / Extrem (×2.0)
+- **An Trainingsplatz?** Toggle → +20% XP
+- Ergibt XP + Stat-Erhöhung passend zum Typ
+
+**Wichtig:** Beides existiert parallel (Variante B aus früherer Diskussion). Monster sind Anreiz, freies Training bleibt die Basis.
+
+## 10. Content: Bodyweight-Übungen (keine Utensilien!)
+
+Alle Übungen müssen draußen ohne Ausrüstung machbar sein.
+
+- **Kraft:** Push-Ups (Standard, Diamant, wide), Pistol Squats, Handstand Holds
+- **Beine:** Squats, Lunges, Split Squats, Bulgarian Split Squats, Jump Squats, Cossack Squats
+- **Cardio:** Burpees, Mountain Climbers, Jumping Jacks, High Knees, Sprints
+- **Core:** Plank, Side Plank, Hollow Body Holds, Superman, Russian Twists, Leg Raises, V-Ups
+- **Mobility:** Bear Crawls, Crab Walks, Deep Squat Hold, Cat-Cow, World's Greatest Stretch
+- **Willenskraft (Zeit-halten):** Plank (Sekunden), Wall Sit, Hollow Body Hold
+
+**AUSDRÜCKLICH RAUS:** Deadlifts, Kettlebell-Übungen, Klimmzüge (siehe Punkt 11), Bankdrücken, alles mit Gewichten.
+
+## 11. Offene Design-Fragen (VOR Implementation klären!)
+
+### 11.1 Nevill / Sugartooth Devil vs. Battering Ram
+
+Im Carbcore-Bestiarium ist Nevill selbst ein "Battering Ram (Ramme) mit Zuckerdiamant-Zähnen; Wächter des Buttercup Palace".
+
+Der User will jetzt gleichzeitig:
+- Nevill / Sugartooth Devil als **mittleren Boss** (24h Cooldown)
+- **Battering Ram** als **häufig spawnende Mob-Familie**
+
+Der User hat die naive Interpretation "Nevill = benannter Boss, Battering Ram = generische Familie" abgelehnt ("Nein"), aber keine alternative Definition geliefert.
+
+→ **MUSS mit dem User geklärt werden bevor Boss-System gebaut wird.**
+
+### 11.2 Klimmzüge (Pull-Ups)
+
+Grundsätzlich nur Bodyweight-Übungen ohne Utensilien. Klimmzüge brauchen eine Stange (in vielen Parks vorhanden, aber nicht überall).
+
+→ **User-Entscheidung offen ob drin oder raus.**
+
+## 12. APK-Bau (Kontext vom Bekannten)
+
+Der User hat einen Bekannten der die frühere Version bereits als APK gebaut hat. Details aus seiner ANLEITUNG_1.md:
+
+- Zwei Ordner: `web/` (die App) + `android/` (WebView-Wrapper-Projekt)
+- Wrapper mit Android Studio + Gradle-Build
+- Signiert mit `fitquest.keystore`, Passwort `fitquest`
+- Kein Server, kein Python, alles läuft lokal im WebView
+- OSM/Overpass werden direkt vom WebView aus dem Netz geladen
+
+**Ziel:** Diese neue Version soll wieder in seinen Wrapper passen. Also `web/`-Ordner-Struktur produzieren die er als Drop-in-Replacement nutzen kann.
+
+**Nice-to-have:** Falls der Bekannte den Wrapper-Quellcode teilt, kann auch die APK-Build-Pipeline direkt eingebunden werden.
+
+## 13. WoF Multiplayer — Langfristige Vision (Info-only, NICHT jetzt bauen)
+
+Zukünftige Multiplayer-Erweiterung der Solo-App (der Name WoF ist eine Anspielung auf WoW):
+
+- Multiplayer-Fitness-MMO
+- Fraktionen: **Carbinator's Way** vs. **King Kones**
+- Ingress-artiges Territorial-System: öffentliche Trainingsplätze als "Portale"
+- Fraktionskampf um Kontrollzonen
+
+**Braucht:** Datenbank, Auth, Cloud-Hosting, Anti-Cheat, Community-Ops.
+
+**Für jetzt nur relevant für Architektur-Entscheidungen:** State-Management sauber trennen, damit später ein Backend-Sync einfach dazwischengeschoben werden kann. Kein Custom-Kram der Multiplayer verunmöglicht.
+
+**Optionale Phase 2:** Personal-Cloud-Variante für Health-Coach-Nutzung mit Klient:innen (nicht Multiplayer, nur Cross-Device-Sync).
+
+## 14. Lore-Referenz: Das Carbcore-Universum
+
+Die Monster kommen aus einem parallelen Musik-Projekt des Users (K-AI, Metal-Konzeptalben "The Way of Carbcore"). Wenn Boss-Beschreibungen/Flavor-Texte thematisch stimmig sein sollen, ist der Held Carbinator (nährt sich von besiegten Gegnern für Energie, isst NUR pflanzliche/tierische Gegner, keine menschlichen).
+
+Für die App selbst: Der Spieler ist **nicht** Carbinator sondern ein eigener Charakter (nach User-Entscheidung: "nur die Mobs, keine Story-Übernahme"). Aber Flavor-Texte à la "Carbinator hätte sich hier gestärkt" oder "kalorienfrei — kein Nutzen für Carbinator" als Wink an Album-Fans sind erwünscht.
+
+**Wichtig:** Keine Übernahme der Ess-Mechanik aus den Songs. XP/Gold/Loot bleibt die Belohnungs-Metapher.
+
+## 15. Empfohlene Bau-Reihenfolge
+
+1. **Grundstruktur:** index.html + main.js + style.css + state.js (localStorage) + map.js (Leaflet)
+2. **Charakter-System** (ohne Editor erstmal, Test-Charakter direkt): create/state/stats/level-up/XP-Formel
+3. **Avatar-Renderer** (avatar.js — modularer SVG-Generator)
+4. **Charakter-Editor** (mit Live-Vorschau)
+5. **Monster-Familien-System** (1 Familie: Squat Goblin mit 5 Stufen + eigenen SVGs)
+6. **Kampf-Modal** (schlichte Version: Counter + Erledigt-Button)
+7. **Belohnungs-System** (XP + Gold + Loot + Streak)
+8. **Freies Training** (parallel)
+9. **Streetfighter-Overlay** (Split-Screen + HP-Balken + VS-Intro + Attack-Animation + K.O.)
+10. **Combo-System + Effekte** (Impact-Stern, Screen-Shake, Damage-Numbers)
+11. **Skilltree + Talents**
+12. **Weitere Monster-Familien** (bis alle aus Liste)
+13. **Einzigartige Bosse** (nach Klärung Nevill/Battering Ram)
+14. **Sensor-Integration** für Special-Kämpfe (Zucker-Hydra)
+15. **APK-Vorbereitung** (Icons, Manifest, WebView-Kompatibilität)
+
+## 16. Ende — Los geht's
+
+Frag den User bei allen offenen Punkten (Punkt 11), bevor du an den entsprechenden Stellen baust. Rest kannst du autonom vorschlagen — der User will kritische Ehrlichkeit, keine Ja-und-Amen-Antworten, und iteriert gerne.
+
+Viel Erfolg! ⚔

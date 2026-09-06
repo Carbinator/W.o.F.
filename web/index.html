@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WoF — World of Fitness</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="app-header" class="hidden">
+      <h1 class="app-title">WoF</h1>
+      <nav id="app-nav">
+        <button class="nav-btn" data-view="karte">🗺️ Karte</button>
+        <button class="nav-btn" data-view="held">🧙 Held</button>
+      </nav>
+    </header>
+
+    <main id="app-main">
+      <section id="view-editor" class="view">
+        <h2 id="editor-title">Charakter erstellen</h2>
+        <form id="editor-form" class="editor-layout">
+          <div class="editor-fields">
+            <label>
+              Name
+              <input type="text" name="name" id="editor-name" maxlength="24" required placeholder="z.B. Kai der Standhafte" />
+            </label>
+
+            <div id="editor-klasse-wrap">
+              <span class="field-label">Klasse</span>
+              <div id="editor-klasse-optionen" class="klasse-optionen"></div>
+            </div>
+            <p id="editor-klasse-readonly" class="readonly-info hidden"></p>
+
+            <label>
+              Geschlecht
+              <select name="geschlecht" id="editor-geschlecht">
+                <option value="female">weiblich</option>
+                <option value="diverse" selected>divers</option>
+                <option value="male">männlich</option>
+              </select>
+            </label>
+
+            <label>
+              Körperbau
+              <select name="koerperbau" id="editor-koerperbau">
+                <option value="ecto">schlank</option>
+                <option value="meso" selected>athletisch</option>
+                <option value="endo">stämmig</option>
+              </select>
+            </label>
+
+            <div>
+              <span class="field-label">Hautton</span>
+              <div id="editor-hautton-swatches" class="swatches"></div>
+            </div>
+
+            <div>
+              <span class="field-label">Haarfarbe</span>
+              <div id="editor-haarfarbe-swatches" class="swatches"></div>
+            </div>
+
+            <label>
+              Frisur
+              <select name="frisur" id="editor-frisur"></select>
+            </label>
+
+            <div id="editor-fitness-wrap">
+              <label>
+                Fitness-Startlevel
+                <select name="fitnessStartlevel" id="editor-fitnessStartlevel"></select>
+              </label>
+              <p id="editor-fitness-hint" class="field-hint"></p>
+            </div>
+            <p id="editor-fitness-readonly" class="readonly-info hidden"></p>
+          </div>
+
+          <div id="editor-preview" class="editor-preview">
+            <div id="editor-avatar-svg" class="avatar-svg"></div>
+          </div>
+        </form>
+
+        <div class="editor-actions">
+          <button type="submit" form="editor-form" id="editor-submit-btn" class="btn-primary">Charakter erstellen</button>
+          <button type="button" id="editor-cancel-btn" class="btn-secondary hidden">Abbrechen</button>
+        </div>
+      </section>
+
+      <section id="view-karte" class="view hidden">
+        <div id="map" class="map-container"></div>
+        <div id="settings-bar">
+          <label>
+            <input type="checkbox" id="vorfuehrmodus-toggle" />
+            Vorführmodus (30m-Reichweite ignorieren, zum Testen)
+          </label>
+        </div>
+      </section>
+
+      <section id="view-held" class="view hidden">
+        <div id="held-avatar" class="avatar-svg"></div>
+        <div id="held-info">
+          <h2 id="held-name"></h2>
+          <p id="held-klasse"></p>
+          <div class="xp-bar"><div id="held-xp-fill" class="xp-fill"></div></div>
+          <p id="held-level-xp-text" class="field-hint"></p>
+          <p id="held-gold"></p>
+          <h3>Werte</h3>
+          <ul id="held-stats" class="held-list"></ul>
+          <h3>Ausrüstung</h3>
+          <ul id="held-ausruestung" class="held-list"></ul>
+          <button id="held-edit-btn" class="btn-secondary">Charakter bearbeiten</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="combat-modal" class="modal hidden">
+    <div class="modal-content combat-content">
+      <h2 id="combat-monster-name"></h2>
+      <div class="combat-arena">
+        <div id="combat-player-svg" class="combat-fighter"></div>
+        <div class="combat-vs">VS</div>
+        <div class="combat-fighter-wrap">
+          <div class="hp-bar"><div id="combat-monster-hp-fill" class="hp-fill"></div></div>
+          <div id="combat-monster-svg" class="combat-fighter"></div>
+        </div>
+      </div>
+
+      <div id="combat-controls">
+        <p id="combat-exercise" class="exercise-name"></p>
+        <p id="combat-counter" class="rep-counter"></p>
+        <div class="combat-buttons">
+          <button id="combat-minus-btn" class="btn-secondary">−</button>
+          <button id="combat-plus-btn" class="btn-rep">Rep! 💪</button>
+        </div>
+        <div class="combat-footer-buttons">
+          <button id="combat-flee-btn" class="btn-secondary">Fliehen</button>
+          <button id="combat-fertig-btn" class="btn-primary" disabled>K.O.!</button>
+        </div>
+      </div>
+
+      <div id="combat-result" class="combat-result hidden"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/monsters.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
