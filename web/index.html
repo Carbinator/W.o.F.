@@ -35,6 +35,7 @@
         <button class="nav-btn" data-view="training">🏋️ Training</button>
         <button class="nav-btn" data-view="talente">🌳 Talente</button>
         <button class="nav-btn" data-view="held">🧙 Held</button>
+        <button id="sound-toggle-btn" class="icon-btn" type="button" title="Sound an/aus">🔊</button>
       </nav>
     </header>
 
@@ -138,6 +139,7 @@
             <input type="checkbox" id="training-trainingsplatz" name="trainingsplatz" />
             An einem Trainingsplatz (+20% XP)
           </label>
+          <p id="training-trainingsplatz-hint" class="field-hint hidden"></p>
           <button type="submit" class="btn-primary">Eintragen</button>
         </form>
         <div id="training-result" class="training-result hidden"></div>
@@ -171,6 +173,8 @@
           <ul id="held-inventar" class="held-list"></ul>
           <h3>Vorräte</h3>
           <ul id="held-consumables" class="held-list"></ul>
+          <h3>Trainingslog</h3>
+          <ul id="held-trainingslog" class="held-list"></ul>
           <button id="held-edit-btn" class="btn-secondary">Charakter bearbeiten</button>
         </div>
       </section>
@@ -233,6 +237,7 @@
   <script src="js/bosses.js"></script>
   <script src="js/sensor.js"></script>
   <script src="js/consumables.js"></script>
+  <script src="js/sound.js"></script>
   <script src="js/combat.js"></script>
   <script src="js/map.js"></script>
   <script src="js/freetraining.js"></script>

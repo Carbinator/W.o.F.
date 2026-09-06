@@ -176,6 +176,11 @@ const WoFState = (() => {
         };
         migriert = true;
       }
+      // Migration: Spielstände von vor dem Trainingslog.
+      if (!character.trainingsLog) {
+        character.trainingsLog = [];
+        migriert = true;
+      }
 
       // Migrierte Felder sofort zurückschreiben — sonst stehen sie nur im
       // Arbeitsspeicher, bis irgendeine andere Aktion ohnehin speichert.
@@ -246,6 +251,7 @@ const WoFState = (() => {
       streak: { count: 0, lastTrainingDate: null },
       besiegteMonster: [],
       bossCooldowns: {},
+      trainingsLog: [],
 
       // Energie-System (Punkt 5.5-Erweiterung): sinkt durchs Trainieren,
       // regeneriert über echte Zeit. Kein Blocker fürs Weiterspielen —
@@ -375,6 +381,21 @@ const WoFState = (() => {
     });
   }
 
+  // ---- Trainingslog (eigene Ergänzung — Wunsch des Users, im HANDOVER ----
+  // nicht spezifiziert): Jeder Kampf und jedes freie Training landet hier,
+  // damit der Spieler nachvollziehen kann, was er wann gemacht hat. Neueste
+  // zuerst; auf 50 Einträge gedeckelt, damit der Spielstand nicht unbegrenzt
+  // wächst (localStorage hat ein Größenlimit).
+  const TRAININGSLOG_MAX = 50;
+
+  function protokolliere(character, eintrag) {
+    if (!character.trainingsLog) character.trainingsLog = [];
+    character.trainingsLog.unshift({ zeitpunkt: new Date().toISOString(), ...eintrag });
+    if (character.trainingsLog.length > TRAININGSLOG_MAX) {
+      character.trainingsLog.length = TRAININGSLOG_MAX;
+    }
+  }
+
   // ---- Streak (Punkt 5.6) -----------------------------------------------
 
   function heuteISO() {
@@ -463,5 +484,6 @@ const WoFState = (() => {
     energieMalusAktiv,
     energieFuerKampfVerbrauchen,
     buffsNachKampfAktualisieren,
+    protokolliere,
   };
 })();

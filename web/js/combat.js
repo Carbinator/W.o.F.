@@ -17,8 +17,9 @@
  * repPlus()-Funktion wie ein manueller Klick auf — kein separater
  * Code-Pfad nötig.
  *
- * Sounds (Punkt 6.5) und Special-Moves nach 5er-Combo sind bewusst noch
- * nicht gebaut (späterer Feinschliff).
+ * Sounds (Punkt 6.5) laufen über sound.js. Special-Moves nach 5er-Combo
+ * sind bewusst noch nicht gebaut (späterer Feinschliff, auf Wunsch des
+ * Users erstmal zurückgestellt).
  */
 
 const WoFCombat = (() => {
@@ -189,6 +190,17 @@ const WoFCombat = (() => {
     WoFState.buffsNachKampfAktualisieren(character);
     const supplementDrops = WoFConsumables.wuerfleDrops(false);
     WoFConsumables.gutschreiben(character, supplementDrops);
+    WoFState.protokolliere(character, {
+      typ: 'monster',
+      gegner: monster.name,
+      uebung: monster.uebung,
+      reps,
+      repZiel: monster.repZiel,
+      einheit: monster.einheit,
+      xp: Math.round(belohnung.xp),
+      gold: Math.round(belohnung.gold),
+      statBoni: { [belohnung.stat]: belohnung.statBetrag },
+    });
     WoFState.speichern(character);
     return { belohnung, levelUps, supplementDrops };
   }
@@ -212,7 +224,7 @@ const WoFCombat = (() => {
     return { xp, gold, loot, klassenBonusAktiv: klassenBonusAktivFlag };
   }
 
-  function schliesseBossKampfAb(character, boss) {
+  function schliesseBossKampfAb(character, boss, gesammelteStatBoni) {
     WoFState.streakAktualisieren(character); // siehe Kommentar in abschliessen()
     const belohnung = berechneBossBelohnung(character, boss);
     const levelUps = WoFState.xpHinzufuegen(character, belohnung.xp);
@@ -229,6 +241,14 @@ const WoFCombat = (() => {
     WoFState.buffsNachKampfAktualisieren(character); // einmal pro ganzem Boss-Kampf, nicht pro Phase
     const supplementDrops = WoFConsumables.wuerfleDrops(true);
     WoFConsumables.gutschreiben(character, supplementDrops);
+    WoFState.protokolliere(character, {
+      typ: 'boss',
+      gegner: boss.name,
+      uebungen: boss.phasen.map((p) => p.uebung),
+      xp: Math.round(belohnung.xp),
+      gold: Math.round(belohnung.gold),
+      statBoni: gesammelteStatBoni,
+    });
     WoFState.speichern(character);
     return { belohnung, levelUps, supplementDrops };
   }
@@ -493,7 +513,10 @@ const WoFCombat = (() => {
 
     aktuellerKampf.reps += 1;
     aktualisiereCounter();
-    spieleAngriffsAnimation(combo.anzahl >= COMBO_SCHWELLE);
+    const istCrit = combo.anzahl >= COMBO_SCHWELLE;
+    spieleAngriffsAnimation(istCrit);
+    WoFSound.spieleHit();
+    if (istCrit) WoFSound.spieleCombo();
   }
 
   function repMinus() {
@@ -520,6 +543,7 @@ const WoFCombat = (() => {
     triggerCss('combat-modal-content', 'shake-final');
 
     setTimeout(() => {
+      WoFSound.spieleSieg();
       const overlay = el('combat-ko-overlay');
       overlay.classList.remove('hidden');
       overlay.classList.remove('play');
@@ -612,7 +636,7 @@ const WoFCombat = (() => {
 
     el('combat-controls').classList.add('hidden');
     spieleKOSequenz(() => {
-      const { belohnung, levelUps, supplementDrops } = schliesseBossKampfAb(character, boss);
+      const { belohnung, levelUps, supplementDrops } = schliesseBossKampfAb(character, boss, aktuellerKampf.gesammelteStatBoni);
       const statZeilen = Object.entries(aktuellerKampf.gesammelteStatBoni).map(
         ([stat, betrag]) => `+${betrag} ${stat}`
       );
@@ -634,6 +658,8 @@ const WoFCombat = (() => {
   }
 
   function zeigeErgebnis({ character, titel, zeilen, loot, levelUps, flavorText, onWeiter }) {
+    if (loot) WoFSound.spieleLoot();
+    if (levelUps.length) WoFSound.spieleLevelUp();
     const result = el('combat-result');
     result.classList.remove('hidden');
     result.innerHTML = `

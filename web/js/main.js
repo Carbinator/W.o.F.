@@ -27,8 +27,22 @@
         zeigeView(btn.dataset.view);
         if (btn.dataset.view === 'held') renderHeldTab();
         if (btn.dataset.view === 'talente') renderTalenteTab();
+        if (btn.dataset.view === 'training') aktualisiereTrainingsplatzHinweis();
       });
     });
+  }
+
+  function initSoundToggle() {
+    const btn = el('sound-toggle-btn');
+    btn.textContent = WoFSound.istStummgeschaltet() ? '🔇' : '🔊';
+    btn.addEventListener('click', () => {
+      const neu = !WoFSound.istStummgeschaltet();
+      WoFSound.setzeStummgeschaltet(neu);
+      btn.textContent = neu ? '🔇' : '🔊';
+    });
+    // AudioContext darf laut Browser erst nach einer echten User-Geste
+    // erstellt/fortgesetzt werden — beim allerersten Tap irgendwo freischalten.
+    document.addEventListener('pointerdown', () => WoFSound.freischalten(), { once: true });
   }
 
   // ---- Charakter-Editor (Punkt 4.3) --------------------------------------
@@ -305,9 +319,40 @@
         if (ergebnis) alert(ergebnis);
       });
     });
+
+    const logListe = (character.trainingsLog || [])
+      .slice(0, 15)
+      .map((eintrag) => `<li><span>${formatiereLogEintrag(eintrag)}</span></li>`)
+      .join('');
+    el('held-trainingslog').innerHTML = logListe || '<li>Noch kein Training eingetragen</li>';
   }
 
   const SLOT_NAMEN = { armor: 'Rüstung', weapon: 'Waffe', amulet: 'Armband' };
+
+  function formatiereDatum(iso) {
+    return new Date(iso).toLocaleString('de-DE', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  function formatiereStatBoni(statBoni) {
+    return Object.entries(statBoni || {})
+      .map(([stat, betrag]) => `+${betrag} ${stat}`)
+      .join(', ');
+  }
+
+  function formatiereLogEintrag(eintrag) {
+    const datum = formatiereDatum(eintrag.zeitpunkt);
+    const statText = formatiereStatBoni(eintrag.statBoni);
+    if (eintrag.typ === 'boss') {
+      return `${datum} — 👑 ${eintrag.gegner} besiegt (${eintrag.uebungen.join(', ')}) · +${eintrag.xp} XP, +${eintrag.gold} Gold${statText ? ', ' + statText : ''}`;
+    }
+    if (eintrag.typ === 'monster') {
+      return `${datum} — ⚔️ ${eintrag.gegner}: ${eintrag.reps}/${eintrag.repZiel} ${eintrag.uebung} · +${eintrag.xp} XP, +${eintrag.gold} Gold${statText ? ', ' + statText : ''}`;
+    }
+    const ortText = eintrag.trainingsplatz ? ' 📍 am Trainingsplatz' : '';
+    return `${datum} — 🏋️ ${eintrag.uebung} (${eintrag.intensitaet}, ${eintrag.dauerMinuten} Min)${ortText} · +${eintrag.xp} XP${statText ? ', ' + statText : ''}`;
+  }
 
   function formatBoni(bonuses) {
     return Object.entries(bonuses || {})
@@ -385,6 +430,25 @@
     el('training-form').addEventListener('submit', onTrainingSubmit);
   }
 
+  // Punkt 7.2: Auto-Erkennung anhand der echten, per Overpass geladenen
+  // Trainingsplätze — setzt die Checkbox nur als Vorschlag, der Spieler
+  // kann sie trotzdem manuell umschalten (Overpass-Daten sind nicht immer
+  // vollständig/aktuell).
+  function aktualisiereTrainingsplatzHinweis() {
+    const info = WoFMap.pruefeTrainingsplatzNaehe();
+    const hint = el('training-trainingsplatz-hint');
+    if (info.angeschlagen) {
+      el('training-trainingsplatz').checked = true;
+      hint.textContent = `📍 Du bist an "${info.name}" (${info.distanz}m) — Bonus vorausgewählt.`;
+      hint.classList.remove('hidden');
+    } else if (info.distanz !== undefined) {
+      hint.textContent = `Nächster bekannter Trainingsplatz: ${info.name}, ${info.distanz}m entfernt.`;
+      hint.classList.remove('hidden');
+    } else {
+      hint.classList.add('hidden');
+    }
+  }
+
   let trainingWirdEingetragen = false; // Sperre gegen Doppel-Tap auf "Eintragen"
 
   function onTrainingSubmit(evt) {
@@ -420,6 +484,9 @@
       <p class="field-hint">Streak: ${character.streak.count} Tag(e)</p>
     `;
 
+    if (levelUps.length) WoFSound.spieleLevelUp();
+    else WoFSound.spieleErfolg();
+
     renderHeldTab();
   }
 
@@ -441,6 +508,7 @@
     character = WoFState.laden();
 
     initNav();
+    initSoundToggle();
     initEditorStatischeFelder();
     initTrainingForm();
     el('editor-form').addEventListener('submit', onEditorSubmit);

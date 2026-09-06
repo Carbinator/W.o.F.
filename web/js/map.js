@@ -1,9 +1,8 @@
 /**
  * map.js — Karten-System mit Leaflet + OSM (Punkt 7 aus HANDOVER.md)
  *
- * Monster-Spawn (7.3) inkl. Boss-Spawn (5.3, Schritt 13) ist enthalten,
- * weil ohne ihn kein Testkampf möglich wäre. Overpass-Trainingsplätze
- * (7.2) sind noch TODO für eine spätere Iteration.
+ * Monster-Spawn (7.3) inkl. Boss-Spawn (5.3, Schritt 13) sowie die
+ * Overpass-Trainingsplätze (7.2) sind enthalten.
  */
 
 const WoFMap = (() => {
@@ -16,10 +15,29 @@ const WoFMap = (() => {
   // nie mehr als ein Boss gleichzeitig auf der Karte.
   const BOSS_SPAWN_CHANCE = 0.12;
 
+  // Punkt 7.2: echte Trainingsplätze aus OpenStreetMap via Overpass API.
+  const TRAININGSPLATZ_RADIUS_M = 500; // gleicher Umkreis wie Monster-Spawns
+  const TRAININGSPLATZ_NAEHE_M = 50; // "im 50m-Radius" -> Bonus gilt
+  // Overpass ist ein geteilter Gratis-Dienst ohne Key — bewusst sparsam
+  // abfragen statt bei jedem GPS-Tick: erst wenn sich der Spieler spürbar
+  // bewegt hat UND seit der letzten Abfrage genug Zeit vergangen ist.
+  const TRAININGSPLATZ_MIN_FETCH_ABSTAND_M = 300;
+  const TRAININGSPLATZ_MIN_FETCH_INTERVALL_MS = 2 * 60 * 1000;
+
+  const TRAININGSPLATZ_TYP_LABEL = {
+    fitness_station: '🏋️ Fitness-Station',
+    calisthenics: '🤸 Calisthenics-Park',
+    fitness_centre: '🏢 Fitnessstudio',
+    track: '🏃 Laufbahn',
+    pitch: '⚽ Sportplatz',
+  };
+
   let map = null;
   let playerPos = { ...FALLBACK_POS };
   let playerMarker = null;
   let monster = []; // { id, istBoss, familyId?, stufe?, bossId?, lat, lng, marker }
+  let trainingsplaetze = []; // { lat, lng, name, typ, marker }
+  let letzterTrainingsplatzFetch = { pos: null, zeit: 0 };
   let vorfuehrmodus = false;
   let character = null;
   let onFightEnded = null;
@@ -161,6 +179,107 @@ const WoFMap = (() => {
     });
   }
 
+  // ---- Trainingsplätze (Punkt 7.2) --------------------------------------
+
+  function trainingsplatzIcon(typ) {
+    const emoji = (TRAININGSPLATZ_TYP_LABEL[typ] || '🏋️ Trainingsplatz').split(' ')[0];
+    return L.divIcon({
+      className: 'trainingsplatz-marker',
+      html: `<div class="trainingsplatz-marker-inner">${emoji}</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+    });
+  }
+
+  function typVonOverpassElement(element) {
+    const tags = element.tags || {};
+    if (tags.leisure === 'fitness_station') return 'fitness_station';
+    if (tags.sport === 'calisthenics') return 'calisthenics';
+    if (tags.leisure === 'fitness_centre') return 'fitness_centre';
+    if (tags.leisure === 'track') return 'track';
+    if (tags.leisure === 'pitch') return 'pitch';
+    return 'fitness_station';
+  }
+
+  function baueOverpassQuery(lat, lng, radius) {
+    // Query exakt wie in HANDOVER 7.2 spezifiziert.
+    return `[out:json][timeout:15];(
+      node["leisure"="fitness_station"](around:${radius},${lat},${lng});
+      node["sport"="calisthenics"](around:${radius},${lat},${lng});
+      way["leisure"="fitness_centre"](around:${radius},${lat},${lng});
+      way["leisure"="track"](around:${radius},${lat},${lng});
+      node["leisure"="pitch"]["sport"~"soccer|basketball"](around:${radius},${lat},${lng});
+    );out center;`;
+  }
+
+  function entferneAlleTrainingsplaetze() {
+    trainingsplaetze.forEach((t) => map.removeLayer(t.marker));
+    trainingsplaetze = [];
+  }
+
+  async function ladeTrainingsplaetze() {
+    const jetzt = Date.now();
+    if (letzterTrainingsplatzFetch.pos) {
+      const abstand = distanzMeter(letzterTrainingsplatzFetch.pos, playerPos);
+      const seitLetztemFetch = jetzt - letzterTrainingsplatzFetch.zeit;
+      if (
+        abstand < TRAININGSPLATZ_MIN_FETCH_ABSTAND_M &&
+        seitLetztemFetch < TRAININGSPLATZ_MIN_FETCH_INTERVALL_MS
+      ) {
+        return;
+      }
+    }
+    letzterTrainingsplatzFetch = { pos: { ...playerPos }, zeit: jetzt };
+
+    const query = baueOverpassQuery(playerPos.lat, playerPos.lng, TRAININGSPLATZ_RADIUS_M);
+    try {
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(query),
+      });
+      if (!response.ok) return;
+      const daten = await response.json();
+      entferneAlleTrainingsplaetze();
+      (daten.elements || []).forEach((element) => {
+        const lat = element.lat !== undefined ? element.lat : element.center && element.center.lat;
+        const lng = element.lon !== undefined ? element.lon : element.center && element.center.lon;
+        if (lat === undefined || lng === undefined) return;
+        const typ = typVonOverpassElement(element);
+        const name = (element.tags && element.tags.name) || TRAININGSPLATZ_TYP_LABEL[typ];
+        const marker = L.marker([lat, lng], { icon: trainingsplatzIcon(typ) }).addTo(map);
+        marker.bindPopup(name);
+        trainingsplaetze.push({ lat, lng, name, typ, marker });
+      });
+    } catch (e) {
+      // Kein Netz, Overpass down, oder CORS blockiert -> stiller Fallback.
+      // Die manuelle Checkbox im Trainings-Formular bleibt die Notlösung,
+      // das Spiel bleibt ohne echte Trainingsplätze trotzdem voll spielbar.
+      console.warn('WoF: Trainingsplätze konnten nicht geladen werden', e);
+    }
+  }
+
+  // Für main.js: ist der Spieler gerade an einem bekannten echten
+  // Trainingsplatz (Punkt 7.2: "im 50m-Radius")? Liefert auch den
+  // nächstgelegenen zurück, wenn der Spieler (noch) zu weit weg ist —
+  // damit die UI z.B. "Laufbahn, 180m entfernt" anzeigen kann.
+  function pruefeTrainingsplatzNaehe() {
+    let naechster = null;
+    let naechsteDistanz = Infinity;
+    trainingsplaetze.forEach((t) => {
+      const d = distanzMeter(playerPos, t);
+      if (d < naechsteDistanz) {
+        naechsteDistanz = d;
+        naechster = t;
+      }
+    });
+    if (!naechster) return { angeschlagen: false };
+    return {
+      angeschlagen: naechsteDistanz <= TRAININGSPLATZ_NAEHE_M,
+      name: naechster.name,
+      distanz: Math.round(naechsteDistanz),
+    };
+  }
+
   function setzePlayerPosition(lat, lng) {
     playerPos = { lat, lng };
     if (!playerMarker) {
@@ -183,6 +302,7 @@ const WoFMap = (() => {
     if (!navigator.geolocation) {
       map.setView([playerPos.lat, playerPos.lng], 16);
       fuelleSpawns();
+      ladeTrainingsplaetze();
       return;
     }
     navigator.geolocation.watchPosition(
@@ -195,6 +315,7 @@ const WoFMap = (() => {
           entferneAlleMonster();
           fuelleSpawns();
         }
+        ladeTrainingsplaetze(); // intern gedrosselt, kann bei jedem Fix aufgerufen werden
       },
       () => {
         // Keine Berechtigung / kein Signal (noch) -> Fallback-Position
@@ -204,6 +325,7 @@ const WoFMap = (() => {
           setzePlayerPosition(playerPos.lat, playerPos.lng);
           map.setView([playerPos.lat, playerPos.lng], 16);
           fuelleSpawns();
+          ladeTrainingsplaetze();
         }
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 8000 }
@@ -228,5 +350,5 @@ const WoFMap = (() => {
     starteGeolocation();
   }
 
-  return { init, setVorfuehrmodus, distanzMeter };
+  return { init, setVorfuehrmodus, distanzMeter, pruefeTrainingsplatzNaehe };
 })();

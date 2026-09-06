@@ -192,6 +192,14 @@ Boss-Kämpfe sollten mehrphasig sein (2-3 verschiedene Übungen nacheinander) un
 - **Sportlich-konkrete Loot-Namen:** Auf Wunsch des Users heißt zufällig gedropptes Ausrüstungs-Loot jetzt nicht mehr generisch "Rüstungsteil"/"Waffe"/"Amulett", sondern konkret (Sportschuhe, Trainingsjacke, Fitness-Armband, ...). Die Klassen-Startausrüstung aus 4.5 (Wildling-Fell etc.) bleibt als gesetzte Klassen-Identität unverändert.
 - **Amulett-Slot → Fitness-Armband:** Der technische Slot heißt intern weiterhin `amulet` (kein Migrationsbedarf für bestehende Spielstände), aber sowohl die Item-Namen als auch das UI-Label wurden auf "Armband" umgestellt (Fitness-Armband, Pulsmesser-Armband, Sport-Armband mit Trittzähler, Smartwatch-Armband, Schweißband fürs Handgelenk) — passend zu einem echten am Handgelenk getragenen Fitness-Tracker statt eines Fantasy-Amuletts.
 
+### 5.8 Trainingslog (eigene Ergänzung vom 2026-09-06, im HANDOVER nicht spezifiziert)
+
+**Entscheidung:** User-Frage: "Haben wir eine Übungsliste, auf der der Trainierende ein bisschen tracken kann, was er da macht?" — bis dahin gab es keinen Verlauf, nur die aggregierten Werte (XP, Stats, Streak) änderten sich unsichtbar im Hintergrund.
+
+- Jeder abgeschlossene Mob-Kampf, Boss-Kampf und jedes freie Training schreibt einen Eintrag in `character.trainingsLog` (neueste zuerst, auf 50 Einträge gedeckelt gegen unbegrenztes Wachstum im localStorage).
+- Anzeige im Helden-Tab unter "Trainingslog": Zeitpunkt, Übung(en)/Gegner, Reps bzw. Dauer, erhaltene XP/Gold/Stat-Zuwächse.
+- `state.js`: `WoFState.protokolliere(character, eintrag)`.
+
 ## 6. Streetfighter-Kampfsystem
 
 **Ziel:** Vollflächen-Kampf-Overlay der aussieht und sich anfühlt wie ein 90er Streetfighter-Automat.
@@ -230,8 +238,8 @@ Boss-Kämpfe sollten mehrphasig sein (2-3 verschiedene Übungen nacheinander) un
 
 ### 6.5 Was NOCH FEHLT (Feinschliff für später)
 
-- Sounds via Web Audio API (Hooks vorbereiten, keine Files hier)
-- Special-Moves nach 5er-Combo
+- ~~Sounds via Web Audio API~~ ✅ implementiert (Ergänzung vom 2026-09-06, siehe `sound.js`): synthetische Töne per Oszillator für Treffer, Combo, Loot, Level-Up und Sieg, keine externen Audio-Dateien. Stummschalt-Button im Header.
+- Special-Moves nach 5er-Combo — auf ausdrücklichen Wunsch des Users erstmal zurückgestellt ("brauchen wir jetzt noch nicht").
 - Boss-Gegenangriffe (aktuell dominiert Spieler komplett — bewusste Design-Entscheidung, weil "vom Fitness-Boss besiegt werden" demotivierend wäre)
 
 ## 7. Karten-System
@@ -262,6 +270,8 @@ out center;
 ```
 
 Ergebnisse als grüne Marker anzeigen. Wenn Spieler ein Training an einem POI absolviert (im 50m-Radius): +20% XP.
+
+**✅ Implementiert (Ergänzung vom 2026-09-06, siehe `map.js`):** Query wird per POST an `https://overpass-api.de/api/interpreter` geschickt, gedrosselt auf max. 1 Anfrage pro 300m Bewegung UND min. 2 Minuten Abstand (Overpass ist ein geteilter Gratis-Dienst ohne Key). Ergebnisse werden als grüne Marker mit Typ-Emoji dargestellt. Die "An Trainingsplatz?"-Checkbox beim Freien Training (Punkt 9) wird beim Öffnen des Training-Tabs automatisch vorausgewählt, wenn der Spieler laut `pruefeTrainingsplatzNaehe()` im 50m-Radius eines geladenen POIs steht — bleibt aber manuell änderbar, falls die OSM-Daten unvollständig/veraltet sind. Fehlschläge (kein Netz, Overpass down, CORS) werden still abgefangen; die manuelle Checkbox bleibt dann die Notlösung.
 
 ### 7.3 Monster-Spawns
 
