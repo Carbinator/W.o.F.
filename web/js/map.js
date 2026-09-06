@@ -1,10 +1,9 @@
 /**
  * map.js — Karten-System mit Leaflet + OSM (Punkt 7 aus HANDOVER.md)
  *
- * Enthält aus Schritt 1 nur die Grundstruktur; Monster-Spawn (7.3) wird
- * hier ergänzt, weil ohne ihn kein Testkampf möglich wäre (Ziel dieser
- * Iteration laut Startprompt). Overpass-Trainingsplätze (7.2) sind noch
- * TODO für eine spätere Iteration.
+ * Monster-Spawn (7.3) inkl. Boss-Spawn (5.3, Schritt 13) ist enthalten,
+ * weil ohne ihn kein Testkampf möglich wäre. Overpass-Trainingsplätze
+ * (7.2) sind noch TODO für eine spätere Iteration.
  */
 
 const WoFMap = (() => {
@@ -12,11 +11,15 @@ const WoFMap = (() => {
   const MAX_MONSTER = 6;
   const INTERACT_RADIUS_M = 30;
   const FALLBACK_POS = { lat: 52.52, lng: 13.405 }; // Berlin — falls keine Geolocation verfügbar ist
+  // Punkt 7.3: "Bosse sehr selten (1x wenn verfügbar)" — eigene Umsetzung:
+  // 12% Spawn-Chance pro freiem Slot (Mitte von Punkt 5.3s "10-15%"), und
+  // nie mehr als ein Boss gleichzeitig auf der Karte.
+  const BOSS_SPAWN_CHANCE = 0.12;
 
   let map = null;
   let playerPos = { ...FALLBACK_POS };
   let playerMarker = null;
-  let monster = []; // { id, familyId, stufe, lat, lng, marker }
+  let monster = []; // { id, istBoss, familyId?, stufe?, bossId?, lat, lng, marker }
   let vorfuehrmodus = false;
   let character = null;
   let onFightEnded = null;
@@ -59,19 +62,45 @@ const WoFMap = (() => {
     });
   }
 
+  function bossIcon(bossId) {
+    const svg = WoFBosses.renderBossSVG(bossId);
+    return L.divIcon({
+      className: 'boss-marker',
+      html: `<div class="boss-marker-inner">${svg}</div><div class="boss-marker-krone">👑</div>`,
+      iconSize: [56, 64],
+      iconAnchor: [28, 64],
+    });
+  }
+
+  function versucheBossSpawn() {
+    const bereitsAufKarte = monster.some((m) => m.istBoss);
+    if (bereitsAufKarte) return null;
+    if (character.level < WoFBosses.MIN_CHAR_LEVEL) return null;
+    if (Math.random() > BOSS_SPAWN_CHANCE) return null;
+    return WoFBosses.zufallsBoss(character);
+  }
+
   function spawneMonster() {
     if (monster.length >= MAX_MONSTER) return;
     const offset = zufallsOffset(SPAWN_RADIUS_M, playerPos.lat);
     const lat = playerPos.lat + offset.lat;
     const lng = playerPos.lng + offset.lng;
-    const familyId = WoFMonsters.zufallsFamilie();
-    const stufe = WoFMonsters.zufallsStufe(character.level);
     const id = WoFState.cryptoId();
 
-    const marker = L.marker([lat, lng], { icon: monsterIcon(familyId, stufe) }).addTo(map);
+    const boss = versucheBossSpawn();
+    let marker;
+    let eintrag;
+    if (boss) {
+      marker = L.marker([lat, lng], { icon: bossIcon(boss.id) }).addTo(map);
+      eintrag = { id, istBoss: true, bossId: boss.id, lat, lng, marker };
+    } else {
+      const familyId = WoFMonsters.zufallsFamilie();
+      const stufe = WoFMonsters.zufallsStufe(character.level);
+      marker = L.marker([lat, lng], { icon: monsterIcon(familyId, stufe) }).addTo(map);
+      eintrag = { id, istBoss: false, familyId, stufe, lat, lng, marker };
+    }
     marker.on('click', () => versucheKampf(id));
-
-    monster.push({ id, familyId, stufe, lat, lng, marker });
+    monster.push(eintrag);
   }
 
   function fuelleSpawns() {
@@ -97,6 +126,18 @@ const WoFMap = (() => {
         `Zu weit weg! Du musst näher als ${INTERACT_RADIUS_M}m ran (aktuell ${Math.round(distanz)}m). ` +
           `Vorführmodus in den Einstellungen umgeht das zum Testen.`
       );
+      return;
+    }
+
+    if (m.istBoss) {
+      const boss = WoFBosses.BOSSE[m.bossId];
+      WoFCombat.starteBosskampf(character, boss, (ergebnis) => {
+        if (!ergebnis.geflohen) {
+          entferneMonster(id);
+          spawneMonster(); // Slot wird neu befüllt — dieser Boss selbst ist erst nach Cooldown wieder verfügbar
+        }
+        if (onFightEnded) onFightEnded(ergebnis);
+      });
       return;
     }
 

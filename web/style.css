@@ -269,6 +269,26 @@ h1, h2, h3 {
   height: 48px;
 }
 
+.boss-marker-inner {
+  width: 56px;
+  height: 64px;
+  filter: drop-shadow(0 0 6px var(--gold)) drop-shadow(0 0 10px var(--gold));
+  animation: bossPulse 1.6s ease-in-out infinite;
+}
+
+.boss-marker-krone {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.1rem;
+}
+
+@keyframes bossPulse {
+  0%, 100% { filter: drop-shadow(0 0 4px var(--gold)) drop-shadow(0 0 8px var(--gold)); }
+  50% { filter: drop-shadow(0 0 10px var(--gold-bright)) drop-shadow(0 0 18px var(--gold-bright)); }
+}
+
 .player-marker {
   font-size: 1.4rem;
 }
@@ -491,6 +511,14 @@ h1, h2, h3 {
   height: 100%;
   background: var(--danger);
   transition: width 0.2s ease-out;
+}
+
+.phase-indicator {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.2rem;
 }
 
 .exercise-name {

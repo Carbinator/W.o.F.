@@ -218,7 +218,9 @@
 
     const bedarf = WoFState.xpFuerNaechstesLevel(character.level);
     el('held-xp-fill').style.width = `${Math.min(100, (character.xp / bedarf) * 100)}%`;
-    el('held-level-xp-text').textContent = `${character.xp} / ${bedarf} XP · Streak: ${character.streak.count} Tag(e)`;
+    const bosseBesiegt = character.besiegteMonster.filter((m) => m.istBoss).length;
+    el('held-level-xp-text').textContent =
+      `${character.xp} / ${bedarf} XP · Streak: ${character.streak.count} Tag(e) · 👑 ${bosseBesiegt} Boss(e) besiegt`;
     el('held-gold').textContent = `💰 ${character.gold} Gold · 🌳 ${character.talentPunkte} Talentpunkt(e)`;
 
     const effektiv = WoFState.effektiveStats(character);

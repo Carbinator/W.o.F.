@@ -158,6 +158,9 @@ const WoFState = (() => {
       if (!character.talente) {
         character.talente = { angriffslust: 0, bestaendigkeit: 0, beute: 0 };
       }
+      if (!character.bossCooldowns) {
+        character.bossCooldowns = {};
+      }
       return character;
     } catch (e) {
       console.error('WoF: Spielstand konnte nicht gelesen werden', e);
@@ -222,6 +225,7 @@ const WoFState = (() => {
 
       streak: { count: 0, lastTrainingDate: null },
       besiegteMonster: [],
+      bossCooldowns: {},
 
       erstelltAm: new Date().toISOString(),
     };

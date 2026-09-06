@@ -1,10 +1,17 @@
 /**
  * combat.js — Kampf-Modal + Belohnungssystem + Streetfighter-Overlay
- * (Punkt 5.4/5.5/5.6 + Punkt 6, Schritte 6/7/9/10)
+ * (Punkt 5.4/5.5/5.6 + Punkt 6 + Punkt 5.3, Schritte 6/7/9/10/13)
  *
  * VS-Intro, Attack-Choreografie mit Combo-Tracking und K.O.-Sequenz
  * laufen rein CSS-animiert; die Reflow-Trick-Helper (triggerCss) sorgen
  * dafür, dass Animationen bei schnellen Klicks jedes Mal neu starten.
+ *
+ * Normale Mob-Kämpfe und Boss-Kämpfe teilen sich dieselbe UI-Logik über
+ * ein gemeinsames "aktuellePhase"-Objekt {uebung, repZiel, einheit,
+ * bonusStat} — bei Mobs ist das einfach der Monster-Datensatz selbst,
+ * bei Bossen eine von mehreren Phasen (Punkt 5.3: "mehrphasig, 2-3
+ * verschiedene Übungen nacheinander").
+ *
  * Sounds (Punkt 6.5) und Special-Moves nach 5er-Combo sind bewusst noch
  * nicht gebaut (späterer Feinschliff).
  */
@@ -12,11 +19,11 @@
 const WoFCombat = (() => {
   const RARITAETEN = ['gewöhnlich', 'ungewöhnlich', 'selten', 'episch', 'legendär'];
 
-  // ---- Belohnungslogik (Punkt 5.4) --------------------------------------
+  // ---- Belohnungslogik: Mob-Kämpfe (Punkt 5.4) ---------------------------
 
-  function klassenBonusAktiv(character, monster) {
+  function klassenBonusAktiv(character, bonusStat) {
     const klasse = WoFState.KLASSEN[character.klasse];
-    return klasse.bonusStat === monster.bonusStat;
+    return klasse.bonusStat === bonusStat;
   }
 
   function ueberperformanceFaktor(reps, ziel) {
@@ -30,13 +37,33 @@ const WoFCombat = (() => {
     // Talent-Ast "Beute" (Punkt 4.6) legt bis zu +20% obendrauf.
     const chance = Math.min(0.95, 0.2 + (stufe - 1) * 0.1 + lootChanceBonus);
     if (Math.random() > chance) return null;
+    return generiereItem(wuerfleRarity(stufe), stufe);
+  }
 
+  function wuerfleRarity(stufe) {
     // Rarity-Gewichtung: höhere Stufe verschiebt Wahrscheinlichkeit nach oben.
     // Eigene Annahme, im HANDOVER nicht exakt spezifiziert.
     const gewichte = [50, 30, 14, 5, 1].map((g, i) => g + stufe * (i * 1.5));
     const summe = gewichte.reduce((a, b) => a + b, 0);
     let roll = Math.random() * summe;
-    let rarityIndex = 0;
+    for (let i = 0; i < gewichte.length; i++) {
+      roll -= gewichte[i];
+      if (roll <= 0) return RARITAETEN[i];
+    }
+    return RARITAETEN[0];
+  }
+
+  // Boss-Loot ist garantiert (Punkt 5.4) mit forcierter Mindest-Rarität.
+  // Eigene Ausweitung: Endbosse (Tier "gross") verlangen mindestens "episch"
+  // statt nur "selten", damit sie sich lohnender anfühlen (Punkt 15: "Endbosse
+  // sind wichtig").
+  function generiereGarantiertesLoot(minRarity, stufeProxy) {
+    const minIndex = RARITAETEN.indexOf(minRarity);
+    // Gewichtung bevorzugt die Mindest-Rarität, lässt aber Luft nach oben.
+    const gewichte = RARITAETEN.map((_, i) => (i < minIndex ? 0 : i === minIndex ? 55 : 45 / (i - minIndex + 1)));
+    const summe = gewichte.reduce((a, b) => a + b, 0);
+    let roll = Math.random() * summe;
+    let rarityIndex = minIndex;
     for (let i = 0; i < gewichte.length; i++) {
       roll -= gewichte[i];
       if (roll <= 0) {
@@ -44,8 +71,7 @@ const WoFCombat = (() => {
         break;
       }
     }
-    const rarity = RARITAETEN[rarityIndex];
-    return generiereItem(rarity, stufe);
+    return generiereItem(RARITAETEN[rarityIndex], stufeProxy);
   }
 
   function generiereItem(rarity, stufe) {
@@ -70,7 +96,7 @@ const WoFCombat = (() => {
 
   function berechneBelohnung(character, monster, reps) {
     const talentBoni = WoFState.berechneTalentBoni(character);
-    const klassenBonus = klassenBonusAktiv(character, monster) ? 1.25 : 1.0;
+    const klassenBonus = klassenBonusAktiv(character, monster.bonusStat) ? 1.25 : 1.0;
     const talentMultiplikator = 1 + talentBoni.combatXpBonus; // Talent-Ast "Angriffslust" (Punkt 4.6)
     const ueberperformung = 1 + ueberperformanceFaktor(reps, monster.repZiel);
     const xp = monster.xpBasis * klassenBonus * talentMultiplikator * ueberperformung;
@@ -102,12 +128,54 @@ const WoFCombat = (() => {
     return { belohnung, levelUps };
   }
 
+  // ---- Belohnungslogik: Boss-Kämpfe (Punkt 5.3/5.4) ----------------------
+  // Eigene eigene Vereinfachung ggü. Mob-Kämpfen: kein Überperformance-Bonus
+  // (bei 2-3 Phasen mit je eigenem Ziel wäre das nicht eindeutig zuordenbar),
+  // dafür Stat-Zuwachs pro Phase (jede Übung trainiert ihren eigenen Stat).
+  const BOSS_STUFE_PROXY = { klein: 3, mittel: 4, gross: 5 };
+
+  function berechneBossBelohnung(character, boss) {
+    const talentBoni = WoFState.berechneTalentBoni(character);
+    const klassenBonusAktivFlag = boss.phasen.some((p) => klassenBonusAktiv(character, p.bonusStat));
+    const klassenBonus = klassenBonusAktivFlag ? 1.25 : 1.0;
+    const talentMultiplikator = 1 + talentBoni.combatXpBonus;
+    const xp = boss.xpBasis * klassenBonus * talentMultiplikator;
+
+    const streakMultiplikator = 1 + Math.min(character.streak.count, 20) * 0.02;
+    const gold = boss.goldBasis * streakMultiplikator;
+
+    const stufeProxy = BOSS_STUFE_PROXY[boss.tier] || 4;
+    const loot = generiereGarantiertesLoot(boss.lootRarityMin, stufeProxy);
+
+    return { xp, gold, loot, klassenBonusAktiv: klassenBonusAktivFlag };
+  }
+
+  function schliesseBossKampfAb(character, boss) {
+    const belohnung = berechneBossBelohnung(character, boss);
+    const levelUps = WoFState.xpHinzufuegen(character, belohnung.xp);
+    WoFState.goldHinzufuegen(character, belohnung.gold);
+    WoFState.streakAktualisieren(character);
+    character.inventory.push(belohnung.loot);
+    character.besiegteMonster.push({
+      familyId: boss.id,
+      stufe: null,
+      istBoss: true,
+      tier: boss.tier,
+      zeitpunkt: new Date().toISOString(),
+    });
+    WoFBosses.setzeCooldown(character, boss.id);
+    WoFState.speichern(character);
+    return { belohnung, levelUps };
+  }
+
   // ---- Modal-UI -----------------------------------------------------------
 
   const COMBO_FENSTER_MS = 1200; // Punkt 6.3: <1200ms Abstand zählt als Combo
   const COMBO_SCHWELLE = 3; // ab 3x Combo: goldener Popup + Crit-Schadenszahlen
 
-  let aktuellerKampf = null; // { monster, reps, character, onClose, combo, abgeschlossen }
+  // aktuellerKampf: { typ: 'monster'|'boss', character, monster?, boss?,
+  //   phaseIndex, aktuellePhase, gesammelteStatBoni, reps, combo, abgeschlossen, onClose }
+  let aktuellerKampf = null;
 
   function el(id) {
     return document.getElementById(id);
@@ -124,8 +192,11 @@ const WoFCombat = (() => {
 
   function starteKampf(character, monster, onClose) {
     aktuellerKampf = {
+      typ: 'monster',
       character,
       monster,
+      phaseIndex: 0,
+      aktuellePhase: monster,
       reps: 0,
       onClose,
       combo: { anzahl: 0, letzterKlick: 0 },
@@ -134,26 +205,64 @@ const WoFCombat = (() => {
 
     el('combat-monster-name').textContent = monster.name;
     el('combat-monster-svg').innerHTML = WoFMonsters.renderMonsterSVG(monster.familyId, monster.stufe);
+    el('combat-phase-indicator').classList.add('hidden');
+    oeffneKampfModal(character, monster.name);
+  }
+
+  function starteBosskampf(character, boss, onClose) {
+    aktuellerKampf = {
+      typ: 'boss',
+      character,
+      boss,
+      phaseIndex: 0,
+      aktuellePhase: boss.phasen[0],
+      gesammelteStatBoni: {},
+      reps: 0,
+      onClose,
+      combo: { anzahl: 0, letzterKlick: 0 },
+      abgeschlossen: false,
+    };
+
+    el('combat-monster-name').textContent = boss.name;
+    el('combat-monster-svg').innerHTML = WoFBosses.renderBossSVG(boss.id);
+    aktualisierePhaseIndikator();
+    el('combat-phase-indicator').classList.remove('hidden');
+    oeffneKampfModal(character, boss.name);
+  }
+
+  function oeffneKampfModal(character, gegnerName) {
     el('combat-monster-svg').className = 'combat-fighter';
     el('combat-player-svg').innerHTML = WoFAvatar.renderAvatarSVG(character);
     el('combat-player-svg').className = 'combat-fighter';
     el('combat-monster-effects').innerHTML = '';
-    el('combat-exercise').textContent = monster.uebung;
     el('combat-result').classList.add('hidden');
     el('combat-controls').classList.add('hidden');
     el('combat-ko-overlay').classList.add('hidden');
     el('combat-ko-overlay').classList.remove('play');
+    aktualisiereExerciseUI();
     aktualisiereCounter();
 
     el('combat-modal').classList.remove('hidden');
-    spieleVSIntro(monster, () => {
+    spieleVSIntro(gegnerName, () => {
       if (aktuellerKampf) el('combat-controls').classList.remove('hidden');
     });
   }
 
-  function spieleVSIntro(monster, onDone) {
+  function aktualisierePhaseIndikator() {
+    const { boss, phaseIndex } = aktuellerKampf;
+    el('combat-phase-indicator').textContent = `Phase ${phaseIndex + 1} von ${boss.phasen.length}`;
+  }
+
+  function aktualisiereExerciseUI() {
+    const { aktuellePhase } = aktuellerKampf;
+    el('combat-exercise').textContent = aktuellePhase.uebung;
+    const istZeit = aktuellePhase.einheit === 'sekunden';
+    el('combat-plus-btn').textContent = istZeit ? 'Halten! ⏱️' : 'Rep! 💪';
+  }
+
+  function spieleVSIntro(gegnerName, onDone) {
     const intro = el('combat-intro');
-    el('combat-intro-monster-name').textContent = monster.name.toUpperCase();
+    el('combat-intro-monster-name').textContent = gegnerName.toUpperCase();
     el('combat-intro-fight').classList.add('hidden');
     intro.classList.remove('hidden');
     intro.classList.remove('play');
@@ -172,14 +281,15 @@ const WoFCombat = (() => {
   }
 
   function aktualisiereCounter() {
-    const { reps, monster } = aktuellerKampf;
-    el('combat-counter').textContent = `${reps} / ${monster.repZiel}`;
+    const { reps, aktuellePhase } = aktuellerKampf;
+    const einheitLabel = aktuellePhase.einheit === 'sekunden' ? 'Sek.' : '';
+    el('combat-counter').textContent = `${reps} / ${aktuellePhase.repZiel} ${einheitLabel}`.trim();
     const fertigBtn = el('combat-fertig-btn');
-    const geschafft = reps >= monster.repZiel;
+    const geschafft = reps >= aktuellePhase.repZiel;
     fertigBtn.disabled = !geschafft;
     fertigBtn.classList.toggle('bereit', geschafft);
 
-    const hpAnteil = Math.max(0, 1 - reps / monster.repZiel);
+    const hpAnteil = Math.max(0, 1 - reps / aktuellePhase.repZiel);
     el('combat-monster-hp-fill').style.width = `${hpAnteil * 100}%`;
   }
 
@@ -193,9 +303,9 @@ const WoFCombat = (() => {
     setTimeout(() => node.remove(), 900);
   }
 
-  function zeigeComboPopup(anzahl) {
+  function zeigePopupText(text) {
     const popup = el('combat-combo-popup');
-    popup.textContent = `COMBO x${anzahl}!`;
+    popup.textContent = text;
     popup.classList.remove('show');
     void popup.offsetWidth;
     popup.classList.add('show');
@@ -206,18 +316,18 @@ const WoFCombat = (() => {
     triggerCss('combat-monster-svg', 'hit');
     triggerCss('combat-modal-content', 'shake');
 
-    const { monster } = aktuellerKampf;
-    const basisSchaden = Math.max(1, Math.round(100 / monster.repZiel));
+    const { aktuellePhase } = aktuellerKampf;
+    const basisSchaden = Math.max(1, Math.round(100 / aktuellePhase.repZiel));
     const schaden = istCrit ? Math.round(basisSchaden * 1.5) : basisSchaden;
 
     spawnEffekt('impact-star', '💥', false);
     spawnEffekt('damage-number', `-${schaden}`, istCrit);
-    if (istCrit) zeigeComboPopup(aktuellerKampf.combo.anzahl);
+    if (istCrit) zeigePopupText(`COMBO x${aktuellerKampf.combo.anzahl}!`);
   }
 
   function repPlus() {
     if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
-    if (aktuellerKampf.reps >= aktuellerKampf.monster.repZiel) return;
+    if (aktuellerKampf.reps >= aktuellerKampf.aktuellePhase.repZiel) return;
 
     const jetzt = Date.now();
     const combo = aktuellerKampf.combo;
@@ -228,7 +338,7 @@ const WoFCombat = (() => {
     }
     combo.letzterKlick = jetzt;
 
-    aktuellerKampf.reps = Math.min(aktuellerKampf.reps + 1, aktuellerKampf.monster.repZiel);
+    aktuellerKampf.reps = Math.min(aktuellerKampf.reps + 1, aktuellerKampf.aktuellePhase.repZiel);
     aktualisiereCounter();
     spieleAngriffsAnimation(combo.anzahl >= COMBO_SCHWELLE);
   }
@@ -270,31 +380,103 @@ const WoFCombat = (() => {
 
   function fertig() {
     if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
-    const { character, monster, reps } = aktuellerKampf;
-    if (reps < monster.repZiel) return;
+    const { reps, aktuellePhase } = aktuellerKampf;
+    if (reps < aktuellePhase.repZiel) return;
 
+    if (aktuellerKampf.typ === 'monster') {
+      fertigMonster();
+    } else {
+      fertigBossPhase();
+    }
+  }
+
+  function fertigMonster() {
+    const { character, monster, reps, onClose } = aktuellerKampf;
     el('combat-controls').classList.add('hidden');
 
     spieleKOSequenz(() => {
-      const { character: c, monster: m, reps: r, onClose } = aktuellerKampf;
-      const { belohnung, levelUps } = abschliessen(c, m, r);
-
-      const result = el('combat-result');
-      result.classList.remove('hidden');
-      result.innerHTML = `
-        <h3>K.O.!</h3>
-        <p>+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}</p>
-        <p>+${Math.round(belohnung.gold)} Gold</p>
-        <p>+${belohnung.statBetrag} ${belohnung.stat}</p>
-        ${belohnung.loot ? `<p class="loot">Beute: ${belohnung.loot.rarity} — ${belohnung.loot.name}</p>` : '<p>Kein Beutefund diesmal.</p>'}
-        ${levelUps.length ? `<p class="levelup">Level Up! Jetzt Stufe ${c.level}</p>` : ''}
-        <button id="combat-weiter-btn" class="btn-primary">Weiter</button>
-      `;
-      el('combat-weiter-btn').addEventListener('click', () => {
-        el('combat-modal').classList.add('hidden');
-        aktuellerKampf = null;
-        if (onClose) onClose({ geflohen: false, belohnung, levelUps });
+      const { belohnung, levelUps } = abschliessen(character, monster, reps);
+      zeigeErgebnis({
+        character,
+        titel: 'K.O.!',
+        zeilen: [
+          `+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}`,
+          `+${Math.round(belohnung.gold)} Gold`,
+          `+${belohnung.statBetrag} ${belohnung.stat}`,
+        ],
+        loot: belohnung.loot,
+        levelUps,
+        onWeiter: () => onClose({ geflohen: false, belohnung, levelUps }),
       });
+    });
+  }
+
+  // Eine Boss-Phase geschafft: Stat sofort gutschreiben (jede Übung
+  // trainiert ihren eigenen Stat), dann entweder zur nächsten Phase
+  // oder — bei der letzten Phase — die volle K.O.-Sequenz + Belohnung.
+  function fertigBossPhase() {
+    const { character, aktuellePhase, reps, boss, phaseIndex, onClose } = aktuellerKampf;
+    const statBetrag = Math.max(1, Math.floor(reps / 5));
+    WoFState.statErhoehen(character, aktuellePhase.bonusStat, statBetrag);
+    aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] =
+      (aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] || 0) + statBetrag;
+
+    const istLetztePhase = phaseIndex >= boss.phasen.length - 1;
+
+    if (!istLetztePhase) {
+      el('combat-controls').classList.add('hidden');
+      zeigePopupText(`Phase ${phaseIndex + 1} geschafft!`);
+      setTimeout(() => {
+        if (!aktuellerKampf) return;
+        aktuellerKampf.phaseIndex += 1;
+        aktuellerKampf.aktuellePhase = boss.phasen[aktuellerKampf.phaseIndex];
+        aktuellerKampf.reps = 0;
+        aktuellerKampf.combo = { anzahl: 0, letzterKlick: 0 };
+        aktualisierePhaseIndikator();
+        aktualisiereExerciseUI();
+        aktualisiereCounter();
+        el('combat-controls').classList.remove('hidden');
+      }, 1000);
+      return;
+    }
+
+    el('combat-controls').classList.add('hidden');
+    spieleKOSequenz(() => {
+      const { belohnung, levelUps } = schliesseBossKampfAb(character, boss);
+      const statZeilen = Object.entries(aktuellerKampf.gesammelteStatBoni).map(
+        ([stat, betrag]) => `+${betrag} ${stat}`
+      );
+      zeigeErgebnis({
+        character,
+        titel: 'BOSS BESIEGT!',
+        zeilen: [
+          `+${Math.round(belohnung.xp)} XP${belohnung.klassenBonusAktiv ? ' (Klassen-Bonus!)' : ''}`,
+          `+${Math.round(belohnung.gold)} Gold`,
+          ...statZeilen,
+        ],
+        loot: belohnung.loot,
+        levelUps,
+        flavorText: boss.flavorText,
+        onWeiter: () => onClose({ geflohen: false, belohnung, levelUps }),
+      });
+    });
+  }
+
+  function zeigeErgebnis({ character, titel, zeilen, loot, levelUps, flavorText, onWeiter }) {
+    const result = el('combat-result');
+    result.classList.remove('hidden');
+    result.innerHTML = `
+      <h3>${titel}</h3>
+      ${zeilen.map((z) => `<p>${z}</p>`).join('')}
+      ${loot ? `<p class="loot">Beute: ${loot.rarity} — ${loot.name}</p>` : '<p>Kein Beutefund diesmal.</p>'}
+      ${levelUps.length ? `<p class="levelup">Level Up! Jetzt Stufe ${character.level}</p>` : ''}
+      ${flavorText ? `<p class="field-hint">${flavorText}</p>` : ''}
+      <button id="combat-weiter-btn" class="btn-primary">Weiter</button>
+    `;
+    el('combat-weiter-btn').addEventListener('click', () => {
+      el('combat-modal').classList.add('hidden');
+      aktuellerKampf = null;
+      onWeiter();
     });
   }
 
@@ -305,5 +487,5 @@ const WoFCombat = (() => {
     el('combat-fertig-btn').addEventListener('click', fertig);
   }
 
-  return { starteKampf, initUI, berechneBelohnung };
+  return { starteKampf, starteBosskampf, initUI, berechneBelohnung };
 })();
