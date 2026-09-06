@@ -473,8 +473,9 @@ const WoFMonsters = (() => {
 
     // Radius wächst direkt mit der Stufe (nicht nur mit der generellen
     // Größenskalierung g) — damit der Dickenzuwachs deutlich sichtbar ist.
-    const radiusOben = (8 + stufe * 2) * g;
-    const radiusUnten = (16 + stufe * 6) * g;
+    // Echter Dönerspieß: oben dicker, unten dünner (User-Korrektur).
+    const radiusOben = (16 + stufe * 6) * g;
+    const radiusUnten = (8 + stufe * 2) * g;
 
     const kegelPfad = `M ${cx - radiusOben} ${fleischOben}
                         L ${cx + radiusOben} ${fleischOben}
