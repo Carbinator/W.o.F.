@@ -35,10 +35,20 @@ const WoFFreiesTraining = (() => {
 
     const xp = dauerMinuten * XP_PRO_MINUTE * intInfo.multiplikator * (trainingsplatz ? TRAININGSPLATZ_BONUS : 1);
 
+    // Budget EINMAL aufteilen statt pro Stat einzeln auf mind. 1 zu runden —
+    // sonst bekäme z.B. Cross-Fit (2 Stats à Gewicht 0.5) bei statGesamt=1
+    // fälschlich 1+1=2 Punkte, doppelt so viel wie ein Einzel-Stat-Typ mit
+    // identischer Dauer/Intensität. Der letzte Stat bekommt den Rest, damit
+    // die Summe garantiert exakt statGesamt ergibt.
     const statGesamt = Math.max(1, Math.floor((dauerMinuten * intInfo.multiplikator) / 10));
+    const statEintraege = Object.entries(typInfo.stats);
     const statBoni = {};
-    Object.entries(typInfo.stats).forEach(([stat, gewicht]) => {
-      statBoni[stat] = Math.max(1, Math.round(statGesamt * gewicht));
+    let verteilt = 0;
+    statEintraege.forEach(([stat, gewicht], i) => {
+      const istLetzter = i === statEintraege.length - 1;
+      const betrag = istLetzter ? Math.max(0, statGesamt - verteilt) : Math.round(statGesamt * gewicht);
+      if (betrag > 0) statBoni[stat] = betrag;
+      verteilt += betrag;
     });
 
     return { xp, statBoni };

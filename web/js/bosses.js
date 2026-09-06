@@ -125,8 +125,9 @@ const WoFBosses = (() => {
   }
 
   function verfuegbareBosse(character) {
-    if (character.level < MIN_CHAR_LEVEL) return [];
-    return Object.values(BOSSE).filter((boss) => !istAufCooldown(character, boss.id));
+    return Object.values(BOSSE).filter(
+      (boss) => character.level >= boss.minCharLevel && !istAufCooldown(character, boss.id)
+    );
   }
 
   function zufallsBoss(character) {

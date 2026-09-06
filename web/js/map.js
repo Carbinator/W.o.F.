@@ -34,7 +34,10 @@ const WoFMap = (() => {
 
   function zufallsOffset(radiusM, lat) {
     const winkel = Math.random() * 2 * Math.PI;
-    const distanz = Math.random() * radiusM;
+    // Wurzel ziehen für flächengleichmäßige Verteilung im Kreis — sonst
+    // häuft sich rund die Hälfte aller Spawns im inneren Viertel der
+    // Fläche (r < radius/2), weil die Fläche eines Rings mit r wächst.
+    const distanz = radiusM * Math.sqrt(Math.random());
     const grad = metersZuGrad(lat);
     return {
       lat: distanz * Math.sin(winkel) * grad.lat,
@@ -75,8 +78,10 @@ const WoFMap = (() => {
   function versucheBossSpawn() {
     const bereitsAufKarte = monster.some((m) => m.istBoss);
     if (bereitsAufKarte) return null;
-    if (character.level < WoFBosses.MIN_CHAR_LEVEL) return null;
     if (Math.random() > BOSS_SPAWN_CHANCE) return null;
+    // WoFBosses.zufallsBoss filtert intern schon nach Charakterlevel
+    // (pro Boss über boss.minCharLevel) und Cooldown — liefert bei
+    // Unterlevel oder lauter Cooldowns einfach null.
     return WoFBosses.zufallsBoss(character);
   }
 
@@ -114,6 +119,11 @@ const WoFMap = (() => {
     if (idx === -1) return;
     map.removeLayer(monster[idx].marker);
     monster.splice(idx, 1);
+  }
+
+  function entferneAlleMonster() {
+    monster.forEach((m) => map.removeLayer(m.marker));
+    monster = [];
   }
 
   function versucheKampf(id) {
@@ -163,6 +173,13 @@ const WoFMap = (() => {
   }
 
   function starteGeolocation() {
+    // Wird true, sobald der erste ECHTE GPS-Fix eintrifft (nicht die
+    // Fallback-Position). Verhindert, dass die App bei einem langsamen
+    // Kaltstart-Fix (Timeout, häufig drinnen) für immer auf Berlin
+    // einrastet: kommt der echte Fix später doch noch rein, zentriert
+    // die Karte dann alsdoch neu und respawnt die Monster dort.
+    let echtePositionErhalten = false;
+
     if (!navigator.geolocation) {
       map.setView([playerPos.lat, playerPos.lng], 16);
       fuelleSpawns();
@@ -171,18 +188,23 @@ const WoFMap = (() => {
     navigator.geolocation.watchPosition(
       (pos) => {
         const neu = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        const erstesMal = !playerMarker;
         setzePlayerPosition(neu.lat, neu.lng);
-        if (erstesMal) {
+        if (!echtePositionErhalten) {
+          echtePositionErhalten = true;
           map.setView([neu.lat, neu.lng], 16);
+          entferneAlleMonster();
           fuelleSpawns();
         }
       },
       () => {
-        // Keine Berechtigung / kein Signal -> Fallback-Position nutzen (Test/Desktop)
-        setzePlayerPosition(playerPos.lat, playerPos.lng);
-        map.setView([playerPos.lat, playerPos.lng], 16);
-        fuelleSpawns();
+        // Keine Berechtigung / kein Signal (noch) -> Fallback-Position
+        // nur nutzen, wenn wir noch gar keinen Marker haben. Ein echter
+        // Fix, der später eintrifft, überschreibt das oben trotzdem noch.
+        if (!playerMarker) {
+          setzePlayerPosition(playerPos.lat, playerPos.lng);
+          map.setView([playerPos.lat, playerPos.lng], 16);
+          fuelleSpawns();
+        }
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 8000 }
     );

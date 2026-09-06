@@ -259,6 +259,12 @@ h1, h2, h3 {
   color: var(--gold);
 }
 
+.btn-secondary:disabled {
+  border-color: #5a4d33;
+  color: #6a5d43;
+  cursor: not-allowed;
+}
+
 /* ---- Karte ---- */
 
 #view-karte {
@@ -452,10 +458,20 @@ h1, h2, h3 {
 
 .held-list li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 0.6rem;
   padding: 0.25rem 0;
   border-bottom: 1px solid #241c12;
   text-transform: capitalize;
+  flex-wrap: wrap;
+}
+
+.held-list li button {
+  text-transform: none;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
 /* ---- Kampf-Modal ---- */
@@ -592,7 +608,6 @@ h1, h2, h3 {
   gap: 0.8rem;
 }
 
-.combat-fertig-btn-bereit,
 #combat-fertig-btn.bereit {
   background: var(--success);
   color: white;

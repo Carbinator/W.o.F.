@@ -255,6 +255,24 @@ const WoFState = (() => {
     return STATS.reduce((sum, s) => sum + (eff[s] || 0), 0);
   }
 
+  // ---- Item-System: Ausrüsten (Punkt 5.5) --------------------------------
+  // Items bleiben nach dem Ausrüsten im Inventar (nicht entfernen) — das
+  // vorher ausgerüstete Stück im Slot geht dabei nicht verloren, es ist ja
+  // ebenfalls noch im Inventar.
+
+  function ausruesten(character, itemId) {
+    const item = character.inventory.find((i) => i.id === itemId);
+    if (!item) return false;
+    character.equipped[item.slot] = item;
+    return true;
+  }
+
+  function ablegen(character, slot) {
+    if (!(slot in character.equipped)) return false;
+    character.equipped[slot] = null;
+    return true;
+  }
+
   // ---- XP / Level-Up -----------------------------------------------------
 
   function xpHinzufuegen(character, betrag) {
@@ -283,7 +301,13 @@ const WoFState = (() => {
   // ---- Streak (Punkt 5.6) -----------------------------------------------
 
   function heuteISO() {
-    return new Date().toISOString().slice(0, 10);
+    // Lokales Kalenderdatum, NICHT toISOString() (das ist UTC und würde
+    // rund um Mitternacht je nach Zeitzone einen Tag verschenken/doppeln).
+    const jetzt = new Date();
+    const jahr = jetzt.getFullYear();
+    const monat = String(jetzt.getMonth() + 1).padStart(2, '0');
+    const tag = String(jetzt.getDate()).padStart(2, '0');
+    return `${jahr}-${monat}-${tag}`;
   }
 
   function tageDifferenz(isoA, isoB) {
@@ -333,6 +357,8 @@ const WoFState = (() => {
     neuerCharakter,
     effektiveStats,
     power,
+    ausruesten,
+    ablegen,
     xpHinzufuegen,
     goldHinzufuegen,
     statErhoehen,

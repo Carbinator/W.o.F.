@@ -31,6 +31,30 @@ const WoFCombat = (() => {
     return klasse.bonusStat === bonusStat;
   }
 
+  // Von Mob- und Boss-Belohnung geteilt, damit eine künftige
+  // Balance-Änderung (z.B. an der Streak-Formel) nicht an zwei Stellen
+  // synchron gehalten werden muss.
+  function gemeinsameMultiplikatoren(character) {
+    const talentBoni = WoFState.berechneTalentBoni(character);
+    return {
+      talentBoni,
+      talentMultiplikator: 1 + talentBoni.combatXpBonus, // Talent-Ast "Angriffslust" (Punkt 4.6)
+      streakMultiplikator: 1 + Math.min(character.streak.count, 20) * 0.02,
+    };
+  }
+
+  // Fisher-Yates statt sort(() => Math.random()-0.5) — letzteres liefert
+  // keine gleichverteilte Permutation und würde manche Stats auf
+  // Mehrfach-Stat-Loot systematisch bevorzugen.
+  function mische(array) {
+    const kopie = [...array];
+    for (let i = kopie.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [kopie[i], kopie[j]] = [kopie[j], kopie[i]];
+    }
+    return kopie;
+  }
+
   function ueberperformanceFaktor(reps, ziel) {
     if (reps <= ziel) return 0;
     const zusatzAnteil = (reps - ziel) / ziel;
@@ -82,7 +106,7 @@ const WoFCombat = (() => {
   function generiereItem(rarity, stufe) {
     const rarityIndex = RARITAETEN.indexOf(rarity);
     const anzahlStats = 1 + Math.floor(rarityIndex / 2);
-    const statPool = [...WoFState.STATS].sort(() => Math.random() - 0.5).slice(0, anzahlStats);
+    const statPool = mische(WoFState.STATS).slice(0, anzahlStats);
     const bonuses = {};
     statPool.forEach((stat) => {
       bonuses[stat] = 1 + rarityIndex + Math.floor(stufe / 2);
@@ -100,13 +124,10 @@ const WoFCombat = (() => {
   }
 
   function berechneBelohnung(character, monster, reps) {
-    const talentBoni = WoFState.berechneTalentBoni(character);
+    const { talentBoni, talentMultiplikator, streakMultiplikator } = gemeinsameMultiplikatoren(character);
     const klassenBonus = klassenBonusAktiv(character, monster.bonusStat) ? 1.25 : 1.0;
-    const talentMultiplikator = 1 + talentBoni.combatXpBonus; // Talent-Ast "Angriffslust" (Punkt 4.6)
     const ueberperformung = 1 + ueberperformanceFaktor(reps, monster.repZiel);
     const xp = monster.xpBasis * klassenBonus * talentMultiplikator * ueberperformung;
-
-    const streakMultiplikator = 1 + Math.min(character.streak.count, 20) * 0.02;
     const gold = monster.goldBasis * streakMultiplikator;
 
     const statBetrag = Math.max(1, Math.floor(reps / 5));
@@ -116,11 +137,15 @@ const WoFCombat = (() => {
   }
 
   function abschliessen(character, monster, reps) {
+    // ERST die Streak für heute aktualisieren, DANN die Belohnung berechnen —
+    // sonst zahlt der erste Kampf eines neuen Streak-Tages noch zum
+    // Vortages-Bonus aus, obwohl der Held-Tab direkt danach schon den
+    // erhöhten Streak-Wert zeigt.
+    WoFState.streakAktualisieren(character);
     const belohnung = berechneBelohnung(character, monster, reps);
     const levelUps = WoFState.xpHinzufuegen(character, belohnung.xp);
     WoFState.goldHinzufuegen(character, belohnung.gold);
     WoFState.statErhoehen(character, belohnung.stat, belohnung.statBetrag);
-    WoFState.streakAktualisieren(character);
     if (belohnung.loot) {
       character.inventory.push(belohnung.loot);
     }
@@ -140,13 +165,10 @@ const WoFCombat = (() => {
   const BOSS_STUFE_PROXY = { klein: 3, mittel: 4, gross: 5 };
 
   function berechneBossBelohnung(character, boss) {
-    const talentBoni = WoFState.berechneTalentBoni(character);
+    const { talentMultiplikator, streakMultiplikator } = gemeinsameMultiplikatoren(character);
     const klassenBonusAktivFlag = boss.phasen.some((p) => klassenBonusAktiv(character, p.bonusStat));
     const klassenBonus = klassenBonusAktivFlag ? 1.25 : 1.0;
-    const talentMultiplikator = 1 + talentBoni.combatXpBonus;
     const xp = boss.xpBasis * klassenBonus * talentMultiplikator;
-
-    const streakMultiplikator = 1 + Math.min(character.streak.count, 20) * 0.02;
     const gold = boss.goldBasis * streakMultiplikator;
 
     const stufeProxy = BOSS_STUFE_PROXY[boss.tier] || 4;
@@ -156,10 +178,10 @@ const WoFCombat = (() => {
   }
 
   function schliesseBossKampfAb(character, boss) {
+    WoFState.streakAktualisieren(character); // siehe Kommentar in abschliessen()
     const belohnung = berechneBossBelohnung(character, boss);
     const levelUps = WoFState.xpHinzufuegen(character, belohnung.xp);
     WoFState.goldHinzufuegen(character, belohnung.gold);
-    WoFState.streakAktualisieren(character);
     character.inventory.push(belohnung.loot);
     character.besiegteMonster.push({
       familyId: boss.id,
@@ -289,7 +311,9 @@ const WoFCombat = (() => {
     const btn = el('combat-sensor-toggle-btn');
     btn.textContent = '📱 Sensor-Modus (HIIT)';
     btn.classList.remove('aktiv');
-    el('combat-sensor-timer').classList.add('hidden');
+    const timerEl = el('combat-sensor-timer');
+    timerEl.classList.add('hidden');
+    timerEl.textContent = '⏱️ 0:00'; // sonst blitzt beim nächsten Start kurz die alte Zeit auf
   }
 
   async function toggleSensor() {
@@ -388,8 +412,13 @@ const WoFCombat = (() => {
     triggerCss('combat-monster-svg', 'hit');
     triggerCss('combat-modal-content', 'shake');
 
-    const { aktuellePhase } = aktuellerKampf;
-    const basisSchaden = Math.max(1, Math.round(100 / aktuellePhase.repZiel));
+    const { aktuellePhase, character } = aktuellerKampf;
+    // Punkt 5.6: Streak soll auch den Combat-Damage erhöhen. Da "Schaden"
+    // hier rein kosmetisch ist (die echte Belohnung hängt an Reps/XP-
+    // Formel, nicht an diesen Zahlen), fließt der Streak-Bonus nur in die
+    // Anzeige ein — Cap bei Streak 20 wie beim Gold-Multiplikator.
+    const streakBonus = 1 + Math.min(character.streak.count, 20) * 0.01;
+    const basisSchaden = Math.max(1, Math.round((100 / aktuellePhase.repZiel) * streakBonus));
     const schaden = istCrit ? Math.round(basisSchaden * 1.5) : basisSchaden;
 
     spawnEffekt('impact-star', '💥', false);
@@ -399,7 +428,9 @@ const WoFCombat = (() => {
 
   function repPlus() {
     if (!aktuellerKampf || aktuellerKampf.abgeschlossen) return;
-    if (aktuellerKampf.reps >= aktuellerKampf.aktuellePhase.repZiel) return;
+    // Bewusst KEIN Anschlag bei repZiel — Punkt 5.4 "Überperformance-Bonus:
+    // mehr Reps als nötig -> bis zu +50% Basis-XP" braucht Reps über das
+    // Ziel hinaus, um überhaupt greifen zu können.
 
     const jetzt = Date.now();
     const combo = aktuellerKampf.combo;
@@ -410,7 +441,7 @@ const WoFCombat = (() => {
     }
     combo.letzterKlick = jetzt;
 
-    aktuellerKampf.reps = Math.min(aktuellerKampf.reps + 1, aktuellerKampf.aktuellePhase.repZiel);
+    aktuellerKampf.reps += 1;
     aktualisiereCounter();
     spieleAngriffsAnimation(combo.anzahl >= COMBO_SCHWELLE);
   }

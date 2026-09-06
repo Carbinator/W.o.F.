@@ -230,9 +230,41 @@
 
     const ausruestungListe = Object.entries(character.equipped)
       .filter(([, item]) => item)
-      .map(([slot, item]) => `<li><span>${SLOT_NAMEN[slot] || slot}: ${item.name}</span><span>${formatBoni(item.bonuses)}</span></li>`)
+      .map(([slot, item]) => `
+        <li>
+          <span>${SLOT_NAMEN[slot] || slot}: ${item.name}</span>
+          <span>${formatBoni(item.bonuses)}</span>
+          <button class="btn-secondary ablegen-btn" data-slot="${slot}">Ablegen</button>
+        </li>`)
       .join('');
     el('held-ausruestung').innerHTML = ausruestungListe || '<li>Nichts ausgerüstet</li>';
+    el('held-ausruestung').querySelectorAll('.ablegen-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        WoFState.ablegen(character, btn.dataset.slot);
+        WoFState.speichern(character);
+        renderHeldTab();
+      });
+    });
+
+    const inventarListe = character.inventory
+      .map((item) => {
+        const istAusgeruestet = character.equipped[item.slot] && character.equipped[item.slot].id === item.id;
+        return `
+          <li>
+            <span>${item.name}${istAusgeruestet ? ' (ausgerüstet)' : ''}</span>
+            <span>${formatBoni(item.bonuses)}</span>
+            <button class="btn-secondary ausruesten-btn" data-id="${item.id}" ${istAusgeruestet ? 'disabled' : ''}>Ausrüsten</button>
+          </li>`;
+      })
+      .join('');
+    el('held-inventar').innerHTML = inventarListe || '<li>Inventar ist leer</li>';
+    el('held-inventar').querySelectorAll('.ausruesten-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        WoFState.ausruesten(character, btn.dataset.id);
+        WoFState.speichern(character);
+        renderHeldTab();
+      });
+    });
   }
 
   const SLOT_NAMEN = { armor: 'Rüstung', weapon: 'Waffe', amulet: 'Amulett' };
