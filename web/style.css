@@ -550,6 +550,25 @@ h1, h2, h3 {
   font-weight: 700;
 }
 
+.sensor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+#combat-sensor-toggle-btn.aktiv {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+
+.sensor-timer {
+  font-family: 'Cinzel', serif;
+  color: var(--gold-bright);
+}
+
 .combat-footer-buttons {
   display: flex;
   justify-content: center;

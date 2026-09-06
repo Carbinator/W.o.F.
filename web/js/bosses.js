@@ -101,9 +101,10 @@ const WoFBosses = (() => {
     zuckerhydra: {
       id: 'zuckerhydra', name: 'Zuckerhydra', tier: 'gross', ...TIER_BASIS.gross, minCharLevel: MIN_CHAR_LEVEL,
       flavorText: 'Jeder Kopf ein Zuckerschock — alle drei liegen flach.',
-      // TODO: Sensor-basierte Bewegungserkennung (Punkt 8 + Punkt 15 Schritt 14)
-      // ist für diesen Boss vorgesehen, aber noch nicht gebaut. Aktuell läuft
-      // der Kampf über den normalen manuellen Rep-Counter wie jeder andere Boss.
+      // HIIT-Modus (Punkt 8): Sensor-basierte Bewegungserkennung optional
+      // zuschaltbar (Schritt 14, siehe sensor.js). Manueller Rep-Counter
+      // bleibt parallel immer nutzbar.
+      sensorFaehig: true,
       phasen: [phase('Squat Jumps', 25, 'muskelaufbau'), phase('Burpees', 20, 'ausdauer'), phase('Mountain Climbers', 30, 'beweglichkeit')],
     },
   };

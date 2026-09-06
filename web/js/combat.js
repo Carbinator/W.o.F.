@@ -1,6 +1,6 @@
 /**
  * combat.js — Kampf-Modal + Belohnungssystem + Streetfighter-Overlay
- * (Punkt 5.4/5.5/5.6 + Punkt 6 + Punkt 5.3, Schritte 6/7/9/10/13)
+ * (Punkt 5.4/5.5/5.6 + Punkt 6 + Punkt 5.3 + Punkt 8, Schritte 6/7/9/10/13/14)
  *
  * VS-Intro, Attack-Choreografie mit Combo-Tracking und K.O.-Sequenz
  * laufen rein CSS-animiert; die Reflow-Trick-Helper (triggerCss) sorgen
@@ -11,6 +11,11 @@
  * bonusStat} — bei Mobs ist das einfach der Monster-Datensatz selbst,
  * bei Bossen eine von mehreren Phasen (Punkt 5.3: "mehrphasig, 2-3
  * verschiedene Übungen nacheinander").
+ *
+ * Optionaler Sensor-Modus (Punkt 8, siehe sensor.js) für Bosse mit
+ * boss.sensorFaehig: ruft bei erkannter Bewegung einfach dieselbe
+ * repPlus()-Funktion wie ein manueller Klick auf — kein separater
+ * Code-Pfad nötig.
  *
  * Sounds (Punkt 6.5) und Special-Moves nach 5er-Combo sind bewusst noch
  * nicht gebaut (späterer Feinschliff).
@@ -201,6 +206,9 @@ const WoFCombat = (() => {
       onClose,
       combo: { anzahl: 0, letzterKlick: 0 },
       abgeschlossen: false,
+      sensorStop: null,
+      sensorStartZeit: null,
+      sensorIntervalId: null,
     };
 
     el('combat-monster-name').textContent = monster.name;
@@ -221,6 +229,9 @@ const WoFCombat = (() => {
       onClose,
       combo: { anzahl: 0, letzterKlick: 0 },
       abgeschlossen: false,
+      sensorStop: null,
+      sensorStartZeit: null,
+      sensorIntervalId: null,
     };
 
     el('combat-monster-name').textContent = boss.name;
@@ -241,6 +252,8 @@ const WoFCombat = (() => {
     el('combat-ko-overlay').classList.remove('play');
     aktualisiereExerciseUI();
     aktualisiereCounter();
+    stoppeSensor();
+    aktualisiereSensorUI();
 
     el('combat-modal').classList.remove('hidden');
     spieleVSIntro(gegnerName, () => {
@@ -251,6 +264,65 @@ const WoFCombat = (() => {
   function aktualisierePhaseIndikator() {
     const { boss, phaseIndex } = aktuellerKampf;
     el('combat-phase-indicator').textContent = `Phase ${phaseIndex + 1} von ${boss.phasen.length}`;
+  }
+
+  // ---- Sensor-Modus (Punkt 8, Schritt 14) --------------------------------
+
+  function istSensorFaehig() {
+    return !!aktuellerKampf && aktuellerKampf.typ === 'boss' && !!aktuellerKampf.boss.sensorFaehig;
+  }
+
+  function aktualisiereSensorUI() {
+    el('combat-sensor-bar').classList.toggle('hidden', !istSensorFaehig());
+  }
+
+  function stoppeSensor() {
+    if (!aktuellerKampf) return;
+    if (aktuellerKampf.sensorStop) {
+      aktuellerKampf.sensorStop();
+      aktuellerKampf.sensorStop = null;
+    }
+    if (aktuellerKampf.sensorIntervalId) {
+      clearInterval(aktuellerKampf.sensorIntervalId);
+      aktuellerKampf.sensorIntervalId = null;
+    }
+    const btn = el('combat-sensor-toggle-btn');
+    btn.textContent = '📱 Sensor-Modus (HIIT)';
+    btn.classList.remove('aktiv');
+    el('combat-sensor-timer').classList.add('hidden');
+  }
+
+  async function toggleSensor() {
+    if (!aktuellerKampf) return;
+    if (aktuellerKampf.sensorStop) {
+      stoppeSensor();
+      return;
+    }
+    if (!WoFSensor.istVerfuegbar()) {
+      alert('Dieses Gerät hat keinen Bewegungssensor. Zähle einfach manuell weiter.');
+      return;
+    }
+    const erlaubt = await WoFSensor.anfragenBerechtigung();
+    if (!aktuellerKampf) return; // Kampf könnte während der Anfrage beendet worden sein (z.B. geflohen)
+    if (!erlaubt) {
+      alert('Sensor-Zugriff wurde nicht erlaubt. Du kannst trotzdem manuell weiterzählen.');
+      return;
+    }
+
+    aktuellerKampf.sensorStop = WoFSensor.starteErkennung(() => repPlus());
+    aktuellerKampf.sensorStartZeit = Date.now();
+    const btn = el('combat-sensor-toggle-btn');
+    btn.textContent = '📱 Sensor läuft — Stop';
+    btn.classList.add('aktiv');
+    const timerEl = el('combat-sensor-timer');
+    timerEl.classList.remove('hidden');
+    aktuellerKampf.sensorIntervalId = setInterval(() => {
+      if (!aktuellerKampf || !aktuellerKampf.sensorStartZeit) return;
+      const sekunden = Math.floor((Date.now() - aktuellerKampf.sensorStartZeit) / 1000);
+      const min = Math.floor(sekunden / 60);
+      const sek = sekunden % 60;
+      timerEl.textContent = `⏱️ ${min}:${String(sek).padStart(2, '0')}`;
+    }, 1000);
   }
 
   function aktualisiereExerciseUI() {
@@ -353,6 +425,7 @@ const WoFCombat = (() => {
 
   function fliehen() {
     if (!aktuellerKampf) return;
+    stoppeSensor();
     const { onClose } = aktuellerKampf;
     el('combat-modal').classList.add('hidden');
     aktuellerKampf = null;
@@ -360,6 +433,7 @@ const WoFCombat = (() => {
   }
 
   function spieleKOSequenz(callback) {
+    stoppeSensor();
     aktuellerKampf.abgeschlossen = true;
     triggerCss('combat-monster-svg', 'boss-ko');
     triggerCss('combat-modal-content', 'shake-final');
@@ -422,6 +496,7 @@ const WoFCombat = (() => {
       (aktuellerKampf.gesammelteStatBoni[aktuellePhase.bonusStat] || 0) + statBetrag;
 
     const istLetztePhase = phaseIndex >= boss.phasen.length - 1;
+    stoppeSensor(); // pro Phase neu aktivieren (neue Übung, neue Bewegung)
 
     if (!istLetztePhase) {
       el('combat-controls').classList.add('hidden');
@@ -485,6 +560,7 @@ const WoFCombat = (() => {
     el('combat-minus-btn').addEventListener('click', repMinus);
     el('combat-flee-btn').addEventListener('click', fliehen);
     el('combat-fertig-btn').addEventListener('click', fertig);
+    el('combat-sensor-toggle-btn').addEventListener('click', toggleSensor);
   }
 
   return { starteKampf, starteBosskampf, initUI, berechneBelohnung };
