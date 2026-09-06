@@ -61,6 +61,69 @@ const WoFState = (() => {
 
   const STATS = ['kraft', 'muskelaufbau', 'ausdauer', 'beweglichkeit', 'willenskraft'];
 
+  // Skilltree (Punkt 4.6): "Konkrete Skilltree-Inhalte kann Claude Code
+  // selbst entwerfen" — eigenes Design. 3 Äste x 3 Stufen pro Klasse,
+  // mechanisch identisch über alle Klassen (nur Namen unterscheiden sich),
+  // damit Code und Balancing an einer Stelle bleiben.
+  const TALENT_AST_BASIS = {
+    angriffslust: {
+      stat: 'combatXpBonus',
+      stufenWerte: [0.05, 0.05, 0.1], // kumuliert +20% XP im Kampf bei Stufe 3
+      beschreibung: (kumuliert) => `+${Math.round(kumuliert * 100)}% XP im Kampf`,
+    },
+    bestaendigkeit: {
+      stat: 'streakGrace',
+      stufenWerte: [1, 1, 1], // kumuliert 3 Gnadentage bei Stufe 3
+      beschreibung: (kumuliert) => `${kumuliert} Gnadentag(e) ohne Streak-Verlust`,
+    },
+    beute: {
+      stat: 'lootChanceBonus',
+      stufenWerte: [0.05, 0.05, 0.1], // kumuliert +20% Beute-Chance bei Stufe 3
+      beschreibung: (kumuliert) => `+${Math.round(kumuliert * 100)}% Beute-Chance`,
+    },
+  };
+
+  // Klassen-spezifische Namen für dieselben 3 Äste (Punkt 4.6 Vorschlag,
+  // z.B. Barbar: "Berserker"/"Bulle"/"Prügler" — hier leicht angepasst).
+  const KLASSEN_TALENTNAMEN = {
+    barbar: { angriffslust: 'Berserker', bestaendigkeit: 'Widerstand', beute: 'Plünderer' },
+    paladin: { angriffslust: 'Kreuzritter', bestaendigkeit: 'Standhaftigkeit', beute: 'Segen' },
+    elf: { angriffslust: 'Sturmklinge', bestaendigkeit: 'Ausdauerlauf', beute: 'Waldglück' },
+    waldlaeufer: { angriffslust: 'Jagdrausch', bestaendigkeit: 'Eiserner Wille', beute: 'Spurleser' },
+  };
+
+  function talentbaumFuer(klasseKey) {
+    const namen = KLASSEN_TALENTNAMEN[klasseKey] || {};
+    return Object.entries(TALENT_AST_BASIS).map(([astKey, basis]) => ({
+      astKey,
+      name: namen[astKey] || astKey,
+      stufenWerte: basis.stufenWerte,
+      beschreibung: basis.beschreibung,
+    }));
+  }
+
+  function talentAusgeben(character, astKey) {
+    if (!TALENT_AST_BASIS[astKey]) return false;
+    if (character.talentPunkte <= 0) return false;
+    const aktuelleStufe = character.talente[astKey] || 0;
+    if (aktuelleStufe >= 3) return false;
+    character.talente[astKey] = aktuelleStufe + 1;
+    character.talentPunkte -= 1;
+    return true;
+  }
+
+  function berechneTalentBoni(character) {
+    const boni = { combatXpBonus: 0, streakGrace: 0, lootChanceBonus: 0 };
+    Object.entries(character.talente || {}).forEach(([astKey, stufe]) => {
+      const basis = TALENT_AST_BASIS[astKey];
+      if (!basis) return;
+      for (let i = 0; i < stufe; i++) {
+        boni[basis.stat] += basis.stufenWerte[i];
+      }
+    });
+    return boni;
+  }
+
   // Punkt 4.4 Fitness-Startlevel-Mapping
   const FITNESS_STARTLEVEL = {
     1: { label: 'Novice', startCharLvl: 1, statBonus: 0 },
@@ -89,7 +152,13 @@ const WoFState = (() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     try {
-      return JSON.parse(raw);
+      const character = JSON.parse(raw);
+      // Migration: Spielstände von vor dem Skilltree (Punkt 15 Schritt 11)
+      // hatten noch kein talente-Feld.
+      if (!character.talente) {
+        character.talente = { angriffslust: 0, bestaendigkeit: 0, beute: 0 };
+      }
+      return character;
     } catch (e) {
       console.error('WoF: Spielstand konnte nicht gelesen werden', e);
       return null;
@@ -145,6 +214,7 @@ const WoFState = (() => {
       xp: 0,
       gold: 0,
       talentPunkte,
+      talente: { angriffslust: 0, bestaendigkeit: 0, beute: 0 },
       stats,
 
       inventory: [armor, weapon],
@@ -230,9 +300,15 @@ const WoFState = (() => {
       } else if (diff === 1) {
         character.streak.count += 1;
       } else {
-        // TODO: Streak-Grace aus Talenten (Punkt 5.6) noch nicht implementiert,
-        // sobald Skilltree existiert (Punkt 15 Schritt 11).
-        character.streak.count = 1;
+        // Streak-Grace (Punkt 5.6 + 4.6): Talent "Beständigkeit" erlaubt
+        // X übersprungene Tage, ohne dass die Streak zurückgesetzt wird.
+        const grace = berechneTalentBoni(character).streakGrace;
+        const uebersprungeneTage = diff - 1;
+        if (uebersprungeneTage <= grace) {
+          character.streak.count += 1;
+        } else {
+          character.streak.count = 1;
+        }
       }
     }
     character.streak.lastTrainingDate = heute;
@@ -258,5 +334,8 @@ const WoFState = (() => {
     statErhoehen,
     streakAktualisieren,
     cryptoId,
+    talentbaumFuer,
+    talentAusgeben,
+    berechneTalentBoni,
   };
 })();

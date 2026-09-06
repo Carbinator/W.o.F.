@@ -26,6 +26,7 @@
       btn.addEventListener('click', () => {
         zeigeView(btn.dataset.view);
         if (btn.dataset.view === 'held') renderHeldTab();
+        if (btn.dataset.view === 'talente') renderTalenteTab();
       });
     });
   }
@@ -218,7 +219,7 @@
     const bedarf = WoFState.xpFuerNaechstesLevel(character.level);
     el('held-xp-fill').style.width = `${Math.min(100, (character.xp / bedarf) * 100)}%`;
     el('held-level-xp-text').textContent = `${character.xp} / ${bedarf} XP · Streak: ${character.streak.count} Tag(e)`;
-    el('held-gold').textContent = `💰 ${character.gold} Gold`;
+    el('held-gold').textContent = `💰 ${character.gold} Gold · 🌳 ${character.talentPunkte} Talentpunkt(e)`;
 
     const effektiv = WoFState.effektiveStats(character);
     el('held-stats').innerHTML = WoFState.STATS.map(
@@ -238,6 +239,53 @@
     return Object.entries(bonuses || {})
       .map(([stat, wert]) => `+${wert} ${stat}`)
       .join(', ');
+  }
+
+  // ---- Talente-Tab (Punkt 4.6) ----------------------------------------------
+
+  function renderTalenteTab() {
+    if (!character) return;
+    el('talente-punkte-hint').textContent =
+      `${character.talentPunkte} Talentpunkt(e) verfügbar — kommen bei jedem Level-Up dazu.`;
+
+    const baeume = WoFState.talentbaumFuer(character.klasse);
+    el('talente-baeume').innerHTML = baeume.map((ast) => {
+      const stufe = character.talente[ast.astKey] || 0;
+      const stufenHtml = ast.stufenWerte.map((_, i) => {
+        const erreicht = i < stufe;
+        return `<div class="talent-stufe ${erreicht ? 'erreicht' : ''}">${i + 1}</div>`;
+      }).join('');
+
+      const aktuelleBeschreibung = stufe > 0 ? ast.beschreibung(kumuliertBisStufe(ast, stufe)) : 'Noch keine Stufe';
+      const naechsteBeschreibung = stufe < 3
+        ? `Nächste Stufe: ${ast.beschreibung(kumuliertBisStufe(ast, stufe + 1))}`
+        : 'Maximalstufe erreicht';
+
+      return `
+        <div class="talent-ast">
+          <h3>${ast.name}</h3>
+          <div class="talent-stufen">${stufenHtml}</div>
+          <p class="field-hint">${aktuelleBeschreibung}</p>
+          <p class="field-hint">${naechsteBeschreibung}</p>
+          <button class="btn-secondary talent-btn" data-ast="${ast.astKey}" ${stufe >= 3 || character.talentPunkte <= 0 ? 'disabled' : ''}>
+            Punkt investieren
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    el('talente-baeume').querySelectorAll('.talent-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (WoFState.talentAusgeben(character, btn.dataset.ast)) {
+          WoFState.speichern(character);
+          renderTalenteTab();
+        }
+      });
+    });
+  }
+
+  function kumuliertBisStufe(ast, stufe) {
+    return ast.stufenWerte.slice(0, stufe).reduce((sum, wert) => sum + wert, 0);
   }
 
   // ---- Freies Training (Punkt 9) -------------------------------------------

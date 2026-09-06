@@ -320,6 +320,62 @@ h1, h2, h3 {
   background: var(--bg-panel);
 }
 
+/* ---- Talente ---- */
+
+#view-talente {
+  overflow-y: auto;
+}
+
+.talente-baeume {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.talent-ast {
+  flex: 1 1 220px;
+  background: var(--bg-panel);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.talent-stufen {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.talent-stufe {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #3a2f22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  color: var(--text-dim);
+}
+
+.talent-stufe.erreicht {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--bg-dark);
+  font-weight: 700;
+}
+
+.talent-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.talent-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ---- Held ---- */
 
 #view-held {

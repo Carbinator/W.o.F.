@@ -17,6 +17,7 @@
       <nav id="app-nav">
         <button class="nav-btn" data-view="karte">🗺️ Karte</button>
         <button class="nav-btn" data-view="training">🏋️ Training</button>
+        <button class="nav-btn" data-view="talente">🌳 Talente</button>
         <button class="nav-btn" data-view="held">🧙 Held</button>
       </nav>
     </header>
@@ -124,6 +125,12 @@
           <button type="submit" class="btn-primary">Eintragen</button>
         </form>
         <div id="training-result" class="training-result hidden"></div>
+      </section>
+
+      <section id="view-talente" class="view hidden">
+        <h2>Talente</h2>
+        <p id="talente-punkte-hint" class="field-hint"></p>
+        <div id="talente-baeume" class="talente-baeume"></div>
       </section>
 
       <section id="view-held" class="view hidden">

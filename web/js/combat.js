@@ -25,9 +25,10 @@ const WoFCombat = (() => {
     return Math.min(0.5, zusatzAnteil * 0.5);
   }
 
-  function lootWuerfeln(stufe) {
+  function lootWuerfeln(stufe, lootChanceBonus) {
     // Normale Monster: 20-60% Chance je nach Level (Punkt 5.4), linear über 5 Stufen.
-    const chance = 0.2 + (stufe - 1) * 0.1;
+    // Talent-Ast "Beute" (Punkt 4.6) legt bis zu +20% obendrauf.
+    const chance = Math.min(0.95, 0.2 + (stufe - 1) * 0.1 + lootChanceBonus);
     if (Math.random() > chance) return null;
 
     // Rarity-Gewichtung: höhere Stufe verschiebt Wahrscheinlichkeit nach oben.
@@ -68,8 +69,9 @@ const WoFCombat = (() => {
   }
 
   function berechneBelohnung(character, monster, reps) {
+    const talentBoni = WoFState.berechneTalentBoni(character);
     const klassenBonus = klassenBonusAktiv(character, monster) ? 1.25 : 1.0;
-    const talentMultiplikator = 1.0; // TODO: Skilltree (Punkt 15 Schritt 11) noch nicht implementiert
+    const talentMultiplikator = 1 + talentBoni.combatXpBonus; // Talent-Ast "Angriffslust" (Punkt 4.6)
     const ueberperformung = 1 + ueberperformanceFaktor(reps, monster.repZiel);
     const xp = monster.xpBasis * klassenBonus * talentMultiplikator * ueberperformung;
 
@@ -77,7 +79,7 @@ const WoFCombat = (() => {
     const gold = monster.goldBasis * streakMultiplikator;
 
     const statBetrag = Math.max(1, Math.floor(reps / 5));
-    const loot = lootWuerfeln(monster.stufe);
+    const loot = lootWuerfeln(monster.stufe, talentBoni.lootChanceBonus);
 
     return { xp, gold, statBetrag, stat: monster.bonusStat, loot, klassenBonusAktiv: klassenBonus > 1 };
   }
