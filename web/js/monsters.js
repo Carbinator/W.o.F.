@@ -149,11 +149,18 @@ const WoFMonsters = (() => {
     return 0.7 + (stufe - 1) * 0.15;
   }
 
+  // Farbschema auf Wunsch des Users: Hellgrün -> Grün -> Dunkelgrün ->
+  // Grün/Rot -> Rot. Die "Grün/Rot"-Übergangsstufe wird nicht als
+  // Mischfarbe (ergäbe nur ein trübes Braun), sondern als zweifarbiger
+  // Goblin umgesetzt — Körper noch grün, Kopf schon rot, als sichtbarer
+  // Zwischenschritt zur reinroten Endstufe.
   function renderSquatGoblin(stufe) {
-    const farben = ['#4a7a3a', '#3f6e30', '#356024', '#8a3020', '#c0401a'];
+    const koerperFarben = ['#8fc75f', '#4f9c3a', '#234a18', '#3f6e30', '#c0301a'];
+    const kopfFarben = ['#8fc75f', '#4f9c3a', '#234a18', '#c0301a', '#c0301a'];
     const namen = FAMILIEN.squat_goblin.stufen;
     const idx = stufe - 1;
-    const farbe = farben[idx];
+    const koerperFarbe = koerperFarben[idx];
+    const kopfFarbe = kopfFarben[idx];
     const groesse = groesseFuer(stufe);
     const cx = 80;
     const cy = 110;
@@ -162,7 +169,7 @@ const WoFMonsters = (() => {
 
     return `
       <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
-        <g fill="${farbe}">
+        <g fill="${koerperFarbe}">
           <path d="M ${cx - 26 * groesse} ${cy + 60 * groesse}
                    L ${cx - 30 * groesse} ${cy + 20 * groesse}
                    L ${cx - 8 * groesse} ${cy + 10 * groesse}
@@ -174,6 +181,8 @@ const WoFMonsters = (() => {
           <ellipse cx="${cx}" cy="${cy}" rx="${34 * groesse}" ry="${28 * groesse}"/>
           <ellipse cx="${cx - 40 * groesse}" cy="${cy + 4 * groesse}" rx="${9 * groesse}" ry="${16 * groesse}" transform="rotate(-20 ${cx - 40 * groesse} ${cy + 4 * groesse})"/>
           <ellipse cx="${cx + 40 * groesse}" cy="${cy + 4 * groesse}" rx="${9 * groesse}" ry="${16 * groesse}" transform="rotate(20 ${cx + 40 * groesse} ${cy + 4 * groesse})"/>
+        </g>
+        <g fill="${kopfFarbe}">
           <circle cx="${cx}" cy="${cy - 40 * groesse}" r="${kopfR}"/>
           <path d="M ${cx - kopfR + 4} ${cy - 40 * groesse - 6}
                    Q ${cx - kopfR - ohrLaenge} ${cy - 40 * groesse - ohrLaenge}
