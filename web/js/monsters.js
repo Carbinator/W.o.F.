@@ -1,8 +1,8 @@
 /**
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
- * 8 Familien: Squat Goblin, Pusher Demon, Dumplings, Burger, Killer
- * Kebab Snakes, Knödel, Plumpi, Pastatoren. Übungen sind auf User-Wunsch (2026-09-06)
+ * 9 Familien: Squat Goblin, Pusher Demon, Dumplings, Burger, Killer
+ * Kebab Snakes, Knödel, Plumpi, Pastatoren, Sodas. Übungen sind auf User-Wunsch (2026-09-06)
  * durchgehend auf "überall ausführbar" umgestellt — keine Boden-/
  * Liege-Übungen mehr außer Liegestütze. Klimmzüge bleiben draußen,
  * Ersatz ist Split Squats (siehe 11.2) — jetzt Plumpis Übung.
@@ -17,9 +17,10 @@ const WoFMonsters = (() => {
   // Standard-5) — doppelte Standard-Progression, gleiche Eskalationsform.
   const ARNOLD_PRESS_PROGRESSION = [10, 20, 40, 100, 200];
   // Auf-der-Stelle-Springen für Pastatoren (User-Vorgabe: "10, 20, 50"
-  // für die ersten drei Stufen) — Stufe 4/5 in gleicher Verdopplungslogik
-  // wie die Standard-Progression fortgeführt (...50 -> 100 -> 200).
-  const JUMPING_PROGRESSION = [10, 20, 50, 100, 200];
+  // für die ersten drei Stufen). Deckel bei 100 statt weiter zu verdoppeln
+  // (User-Korrektur: "Leute sollen ja net drei Minuten stehen, bevor der
+  // Mob gekillt ist") — Stufe 4/5 füllen die Lücke bis 100 auf.
+  const JUMPING_PROGRESSION = [10, 20, 50, 75, 100];
 
   // Eigene Annahme (im HANDOVER nicht spezifiziert): Basiswerte pro Stufe,
   // gleich über alle Familien — Belohnung hängt an der Monster-Stufe
@@ -146,6 +147,19 @@ const WoFMonsters = (() => {
         'pastatoren', 'Auf der Stelle springen', 'ausdauer',
         ['Spagetti', 'Linguino', 'Fussiliator', 'Riga Toni', 'Band Nudel'],
         JUMPING_PROGRESSION
+      ),
+    },
+    sodas: {
+      id: 'sodas',
+      name: 'Sodas',
+      uebung: 'Wadenheben',
+      einheit: 'reps',
+      bonusStat: 'ausdauer',
+      sprueche: [],
+      stufen: baueStufen(
+        'sodas', 'Wadenheben', 'ausdauer',
+        ['Tiny Soda', 'Big Soda', 'Mighty Soda', 'High and Mighty Soda', 'Gallon Soda'],
+        STANDARD_PROGRESSION
       ),
     },
   };
@@ -789,6 +803,103 @@ const WoFMonsters = (() => {
     `;
   }
 
+  // Sodas (9. Familie, User-Idee 2026-09-06): 5 Getränke-Gebinde als
+  // Eskalationsstufen (Dose -> Dose -> Flasche -> Flasche -> Gallonen-
+  // Kanister mit Henkel), mit wachsender Sprudel-Blasenmenge pro Stufe
+  // als Zusatz-Eskalation (analog zum Belag bei Creature/Dumpling).
+  // Übung "Wadenheben" läuft über die normale Tap-UI wie jede andere
+  // Familie — der Sensor-Modus ist laut combat.js (istSensorFaehig())
+  // exklusiv an Boss-Kämpfe mit boss.sensorFaehig gebunden, unabhängig
+  // von der Übung.
+  function renderSoda(stufe) {
+    const idx = stufe - 1;
+    const g = groesseFuer(stufe);
+    const namen = FAMILIEN.sodas.stufen;
+    const cx = 80;
+    const cy = 128;
+    const farben = ['#d83a3a', '#c82828', '#a81818', '#881010', '#680808'];
+    const farbe = farben[idx];
+    const labelFarbe = '#f0d840';
+    const deckelFarbe = '#3a4a3a';
+
+    let koerperHtml = '';
+    let deckelHtml = '';
+    let oben = cy;
+
+    if (stufe === 1 || stufe === 2) {
+      // Dose: gerader Zylinder mit Lasche oben.
+      const breite = (stufe === 1 ? 20 : 26) * g;
+      const hoehe = (stufe === 1 ? 60 : 76) * g;
+      oben = cy - hoehe / 2;
+      const unten = cy + hoehe / 2;
+      koerperHtml = `
+        <rect x="${(cx - breite).toFixed(1)}" y="${oben.toFixed(1)}" width="${(breite * 2).toFixed(1)}" height="${(unten - oben).toFixed(1)}" rx="${6 * g}" fill="${farbe}"/>
+        <rect x="${(cx - breite * 0.6).toFixed(1)}" y="${(cy - 6 * g).toFixed(1)}" width="${(breite * 1.2).toFixed(1)}" height="${(14 * g).toFixed(1)}" fill="${labelFarbe}"/>
+      `;
+      deckelHtml = `
+        <ellipse cx="${cx}" cy="${oben.toFixed(1)}" rx="${breite.toFixed(1)}" ry="${(3 * g).toFixed(1)}" fill="#c8c0a8"/>
+        <ellipse cx="${(cx + 5 * g).toFixed(1)}" cy="${oben.toFixed(1)}" rx="${(3 * g).toFixed(1)}" ry="${(1.4 * g).toFixed(1)}" fill="none" stroke="#8a8468" stroke-width="1.4"/>
+      `;
+    } else if (stufe === 3 || stufe === 4) {
+      // Flasche (Stufe 3 = 1L, Stufe 4 = 1,5L, bauchiger) mit Hals + Schraubverschluss.
+      const breite = (stufe === 3 ? 24 : 30) * g;
+      const hoehe = (stufe === 3 ? 72 : 88) * g;
+      const halsBreite = 7 * g;
+      const halsHoehe = 14 * g;
+      oben = cy - hoehe / 2;
+      const unten = cy + hoehe / 2;
+      koerperHtml = `
+        <rect x="${(cx - halsBreite).toFixed(1)}" y="${(oben - halsHoehe).toFixed(1)}" width="${(halsBreite * 2).toFixed(1)}" height="${halsHoehe.toFixed(1)}" fill="${farbe}"/>
+        <rect x="${(cx - breite).toFixed(1)}" y="${oben.toFixed(1)}" width="${(breite * 2).toFixed(1)}" height="${(unten - oben).toFixed(1)}" rx="${10 * g}" fill="${farbe}"/>
+        <rect x="${(cx - breite * 0.65).toFixed(1)}" y="${(cy - 2 * g).toFixed(1)}" width="${(breite * 1.3).toFixed(1)}" height="${(16 * g).toFixed(1)}" fill="${labelFarbe}"/>
+      `;
+      oben = oben - halsHoehe;
+      deckelHtml = `<rect x="${(cx - halsBreite - 1.5 * g).toFixed(1)}" y="${(oben - 6 * g).toFixed(1)}" width="${(halsBreite * 2 + 3 * g).toFixed(1)}" height="${(7 * g).toFixed(1)}" rx="${2 * g}" fill="${deckelFarbe}"/>`;
+    } else {
+      // Gallonen-Kanister: breiter Körper + Henkel + Ausgießer.
+      const breite = 38 * g;
+      const hoehe = 86 * g;
+      oben = cy - hoehe / 2 - 6 * g;
+      const unten = cy + hoehe / 2;
+      koerperHtml = `
+        <rect x="${(cx - breite).toFixed(1)}" y="${oben.toFixed(1)}" width="${(breite * 2).toFixed(1)}" height="${(unten - oben).toFixed(1)}" rx="${8 * g}" fill="${farbe}"/>
+        <rect x="${(cx - breite * 0.65).toFixed(1)}" y="${(oben + 14 * g).toFixed(1)}" width="${(breite * 1.3).toFixed(1)}" height="${(22 * g).toFixed(1)}" fill="${labelFarbe}"/>
+        <path d="M ${(cx + breite).toFixed(1)} ${(oben + 10 * g).toFixed(1)}
+                 Q ${(cx + breite + 16 * g).toFixed(1)} ${(oben + 28 * g).toFixed(1)} ${(cx + breite).toFixed(1)} ${(oben + 46 * g).toFixed(1)}"
+              stroke="${farbe}" stroke-width="${6 * g}" fill="none"/>
+      `;
+      deckelHtml = `<rect x="${(cx - 7 * g).toFixed(1)}" y="${(oben - 9 * g).toFixed(1)}" width="${(14 * g).toFixed(1)}" height="${(9 * g).toFixed(1)}" fill="${deckelFarbe}"/>`;
+    }
+
+    // Sprudel-Blasen, die aus dem Deckel/Verschluss steigen — pro Stufe eine mehr.
+    const blasenPositionen = [
+      { dx: 0, dy: -8 },
+      { dx: -8, dy: -16 },
+      { dx: 8, dy: -16 },
+      { dx: -14, dy: -26 },
+      { dx: 14, dy: -26 },
+    ];
+    let blasenHtml = '';
+    for (let i = 0; i < stufe; i++) {
+      const p = blasenPositionen[i];
+      blasenHtml += `<circle cx="${(cx + p.dx * g).toFixed(1)}" cy="${(oben + p.dy * g).toFixed(1)}" r="${(2.2 * g).toFixed(1)}" fill="#f0f8e0" opacity="0.8"/>`;
+    }
+
+    const gesichtHtml = `
+      <circle cx="${(cx - 7 * g).toFixed(1)}" cy="${cy.toFixed(1)}" r="${1.8 * g}" fill="#14100c"/>
+      <circle cx="${(cx + 7 * g).toFixed(1)}" cy="${cy.toFixed(1)}" r="${1.8 * g}" fill="#14100c"/>
+    `;
+
+    return `
+      <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
+        ${koerperHtml}
+        ${deckelHtml}
+        ${gesichtHtml}
+        ${blasenHtml}
+      </svg>
+    `;
+  }
+
   const RENDERER = {
     squat_goblin: renderSquatGoblin,
     pusher_demon: renderPusherDemon,
@@ -798,6 +909,7 @@ const WoFMonsters = (() => {
     knoedel: renderKnoedel,
     plumpi: renderPlumpi,
     pastatoren: renderPastator,
+    sodas: renderSoda,
   };
 
   function renderMonsterSVG(familyId, stufe) {
