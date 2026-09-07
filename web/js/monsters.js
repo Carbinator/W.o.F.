@@ -1,8 +1,8 @@
 /**
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
- * 9 Familien: Squat Goblin, Pusher Demon, Dumplings, Creature, Killer
- * Kebab Snakes, Knödel, Plumpi, Pastatoren, Sodas. Übungen sind auf User-Wunsch (2026-09-06)
+ * 10 Familien: Squat Goblin, Pusher Demon, Dumplings, Creature, Killer
+ * Kebab Snakes, Knödel, Plumpi, Pastatoren, Sodas, Gummibären. Übungen sind auf User-Wunsch (2026-09-06)
  * durchgehend auf "überall ausführbar" umgestellt — keine Boden-/
  * Liege-Übungen mehr außer Liegestütze. Klimmzüge bleiben draußen,
  * Ersatz ist Split Squats (siehe 11.2) — jetzt Plumpis Übung.
@@ -159,6 +159,19 @@ const WoFMonsters = (() => {
       stufen: baueStufen(
         'sodas', 'Wadenheben', 'ausdauer',
         ['Tiny Soda', 'Big Soda', 'Mighty Soda', 'High and Mighty Soda', 'Gallon Soda'],
+        STANDARD_PROGRESSION
+      ),
+    },
+    gummibaeren: {
+      id: 'gummibaeren',
+      name: 'Gummibären',
+      uebung: 'Cossack Squat',
+      einheit: 'reps',
+      bonusStat: 'kraft',
+      sprueche: [],
+      stufen: baueStufen(
+        'gummibaeren', 'Cossack Squat', 'kraft',
+        ['Gummibärchen', 'Gummibär', 'Gummibär Gigant', 'Gummibär Patriarch', 'Gummibär Matriarch'],
         STANDARD_PROGRESSION
       ),
     },
@@ -900,6 +913,84 @@ const WoFMonsters = (() => {
     `;
   }
 
+  // Gummibären (10. Familie, User-Idee 2026-09-07): klassische
+  // Gummibär-Silhouette (Kopf + 2 Ohren, Birnenform-Körper, Stummelarme/
+  // -beine, Glanzlicht für den "Gummi"-Look) in wachsender Süßwaren-
+  // Farbeskalation gelb -> orange -> rot. Patriarch/Matriarch als
+  // oberste 2 Stufen bekommen je ein eigenes Erkennungsmerkmal (Krone +
+  // Schnauzer bzw. Schleife + Wimpern) statt nur Farbe/Größe.
+  function renderGummibaer(stufe) {
+    const idx = stufe - 1;
+    const g = groesseFuer(stufe);
+    const namen = FAMILIEN.gummibaeren.stufen;
+    const cx = 80;
+    const cy = 130;
+    const farben = ['#f0d840', '#f0a030', '#d83030', '#2a6a2a', '#c83a7a'];
+    const farbe = farben[idx];
+
+    const bodyRx = 26 * g;
+    const bodyRy = 32 * g;
+    const headR = 17 * g;
+    const headCy = cy - bodyRy - headR + 8 * g;
+
+    const koerperHtml = `
+      <g fill="${farbe}">
+        <ellipse cx="${(cx - bodyRx + 3 * g).toFixed(1)}" cy="${(cy - 6 * g).toFixed(1)}" rx="${(7 * g).toFixed(1)}" ry="${(15 * g).toFixed(1)}" transform="rotate(-24 ${(cx - bodyRx + 3 * g).toFixed(1)} ${(cy - 6 * g).toFixed(1)})"/>
+        <ellipse cx="${(cx + bodyRx - 3 * g).toFixed(1)}" cy="${(cy - 6 * g).toFixed(1)}" rx="${(7 * g).toFixed(1)}" ry="${(15 * g).toFixed(1)}" transform="rotate(24 ${(cx + bodyRx - 3 * g).toFixed(1)} ${(cy - 6 * g).toFixed(1)})"/>
+        <ellipse cx="${(cx - 13 * g).toFixed(1)}" cy="${(cy + bodyRy - 6 * g).toFixed(1)}" rx="${(9 * g).toFixed(1)}" ry="${(13 * g).toFixed(1)}"/>
+        <ellipse cx="${(cx + 13 * g).toFixed(1)}" cy="${(cy + bodyRy - 6 * g).toFixed(1)}" rx="${(9 * g).toFixed(1)}" ry="${(13 * g).toFixed(1)}"/>
+        <ellipse cx="${cx}" cy="${cy.toFixed(1)}" rx="${bodyRx.toFixed(1)}" ry="${bodyRy.toFixed(1)}"/>
+        <circle cx="${(cx - 10 * g).toFixed(1)}" cy="${(headCy - 14 * g).toFixed(1)}" r="${(6 * g).toFixed(1)}"/>
+        <circle cx="${(cx + 10 * g).toFixed(1)}" cy="${(headCy - 14 * g).toFixed(1)}" r="${(6 * g).toFixed(1)}"/>
+        <circle cx="${cx}" cy="${headCy.toFixed(1)}" r="${headR.toFixed(1)}"/>
+      </g>
+      <ellipse cx="${(cx - bodyRx * 0.35).toFixed(1)}" cy="${(cy - bodyRy * 0.45).toFixed(1)}" rx="${(7 * g).toFixed(1)}" ry="${(11 * g).toFixed(1)}"
+                transform="rotate(-20 ${(cx - bodyRx * 0.35).toFixed(1)} ${(cy - bodyRy * 0.45).toFixed(1)})" fill="#ffffff" opacity="0.3"/>
+    `;
+
+    const gesichtHtml = `
+      <circle cx="${(cx - 6 * g).toFixed(1)}" cy="${headCy.toFixed(1)}" r="${(1.8 * g).toFixed(1)}" fill="#14100c"/>
+      <circle cx="${(cx + 6 * g).toFixed(1)}" cy="${headCy.toFixed(1)}" r="${(1.8 * g).toFixed(1)}" fill="#14100c"/>
+      <circle cx="${cx}" cy="${(headCy + 5 * g).toFixed(1)}" r="${(1.4 * g).toFixed(1)}" fill="#14100c"/>
+    `;
+
+    let extraHtml = '';
+    if (stufe === 4) {
+      // Patriarch: Krone + Schnauzer.
+      extraHtml = `
+        <path d="M ${(cx - 12 * g).toFixed(1)} ${(headCy - headR - 2 * g).toFixed(1)}
+                 L ${(cx - 6 * g).toFixed(1)} ${(headCy - headR - 14 * g).toFixed(1)}
+                 L ${cx} ${(headCy - headR - 4 * g).toFixed(1)}
+                 L ${(cx + 6 * g).toFixed(1)} ${(headCy - headR - 14 * g).toFixed(1)}
+                 L ${(cx + 12 * g).toFixed(1)} ${(headCy - headR - 2 * g).toFixed(1)} Z" fill="#e8c840" stroke="#a88818" stroke-width="1"/>
+        <path d="M ${(cx - 7 * g).toFixed(1)} ${(headCy + 7 * g).toFixed(1)}
+                 Q ${cx} ${(headCy + 10 * g).toFixed(1)} ${(cx + 7 * g).toFixed(1)} ${(headCy + 7 * g).toFixed(1)}"
+              stroke="#3a2010" stroke-width="${(2.2 * g).toFixed(1)}" fill="none" stroke-linecap="round"/>
+      `;
+    } else if (stufe === 5) {
+      // Matriarch: Schleife + Wimpern.
+      extraHtml = `
+        <path d="M ${cx} ${(headCy - headR - 2 * g).toFixed(1)}
+                 L ${(cx - 10 * g).toFixed(1)} ${(headCy - headR - 10 * g).toFixed(1)}
+                 L ${(cx - 10 * g).toFixed(1)} ${(headCy - headR + 4 * g).toFixed(1)} Z" fill="#f050a0"/>
+        <path d="M ${cx} ${(headCy - headR - 2 * g).toFixed(1)}
+                 L ${(cx + 10 * g).toFixed(1)} ${(headCy - headR - 10 * g).toFixed(1)}
+                 L ${(cx + 10 * g).toFixed(1)} ${(headCy - headR + 4 * g).toFixed(1)} Z" fill="#f050a0"/>
+        <circle cx="${cx}" cy="${(headCy - headR - 2 * g).toFixed(1)}" r="${(2.6 * g).toFixed(1)}" fill="#d02878"/>
+        <path d="M ${(cx - 8 * g).toFixed(1)} ${(headCy - 3 * g).toFixed(1)} L ${(cx - 11 * g).toFixed(1)} ${(headCy - 6 * g).toFixed(1)}" stroke="#14100c" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M ${(cx + 8 * g).toFixed(1)} ${(headCy - 3 * g).toFixed(1)} L ${(cx + 11 * g).toFixed(1)} ${(headCy - 6 * g).toFixed(1)}" stroke="#14100c" stroke-width="1.4" stroke-linecap="round"/>
+      `;
+    }
+
+    return `
+      <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${namen[idx].name}">
+        ${koerperHtml}
+        ${gesichtHtml}
+        ${extraHtml}
+      </svg>
+    `;
+  }
+
   const RENDERER = {
     squat_goblin: renderSquatGoblin,
     pusher_demon: renderPusherDemon,
@@ -910,6 +1001,7 @@ const WoFMonsters = (() => {
     plumpi: renderPlumpi,
     pastatoren: renderPastator,
     sodas: renderSoda,
+    gummibaeren: renderGummibaer,
   };
 
   function renderMonsterSVG(familyId, stufe) {

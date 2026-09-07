@@ -8,7 +8,7 @@
 
 **Fertig & automatisiert getestet** (Playwright, 50+ Checks, 0 offene Fehler, 0 JS-Exceptions):
 - Kompletter Charakter-Flow: Erstellung, Bearbeiten, SVG-Avatar (4 Klassen × Geschlecht × Körperbau × 6 Hauttöne × 10 Haarfarben × 6 Frisuren)
-- Alle 9 Monster-Familien (je 5 Stufen) + alle 16 Bosse — eigenes Hand-SVG-Design pro Familie/Boss, eigener Kampfspruch (siehe 6.6)
+- Alle 10 Monster-Familien (je 5 Stufen) + alle 16 Bosse — eigenes Hand-SVG-Design pro Familie/Boss, eigener Kampfspruch (siehe 6.6)
 - Streetfighter-Kampf-Overlay (VS-Intro, Combo-System, K.O.-Sequenz, Sound-Effekte), inkl. Fliehen und direktem Neustart danach
 - Belohnungssystem: XP/Gold/Loot/Überperformance-Bonus, Talente (3 Äste × 3 Stufen/Klasse, Effekte geprüft), Streak + Grace-Tage, Boss-Cooldowns
 - Energie-System + 4 Verbrauchsgüter (Erschöpfung ohne Kampf-Niederlage, siehe 5.7)
@@ -137,7 +137,7 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 ### 5.2 Häufig-Spawner-Familien
 
-**✅ Umgesetzt, 9 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde zwischenzeitlich zu "Burger" umbenannt/umgestaltet, dann auf User-Wunsch 2026-09-07 zurück zu "Creature" umbenannt, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
+**✅ Umgesetzt, 10 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde zwischenzeitlich zu "Burger" umbenannt/umgestaltet, dann auf User-Wunsch 2026-09-07 zurück zu "Creature" umbenannt, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
 
 | Familie | Übung | Bonus-Stat |
 |---|---|---|
@@ -150,6 +150,7 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 | Plumpi | Split Squats | kraft |
 | Pastatoren | Auf der Stelle springen | ausdauer |
 | Sodas | Wadenheben | ausdauer |
+| Gummibären | Cossack Squat | kraft |
 
 **Übungen-Update (2026-09-06):** Auf User-Rückmeldung ("die Übungen sind blöd... wir brauchen Übungen, die man überall ausführen kann") wurden Sit-Ups, Burpees und Russian Twists ersetzt — alles Übungen, die Bodenkontakt/Hinlegen brauchen und für unterwegs unpraktisch sind. Standing Arnold Press hat eine eigene Rep-Progression (10→20→40→100→200 statt Standard 5→10→20→50→100, User-Vorgabe "10 in der ersten Stufe").
 
@@ -159,9 +160,11 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 **Sodas (9. Familie, Ergänzung 2026-09-06, komplett User-Idee):** Übung "Wadenheben" (Standard-Progression 5→10→20→50→100, gleicher Deckel-Gedanke wie bei Pastatoren). User fragte, ob der Bewegungssensor (`sensor.js`) Wadenheben erkennen könnte — Antwort: irrelevant, der Sensor-Modus ist laut `combat.js` (`istSensorFaehig()`) exklusiv an Boss-Kämpfe mit `boss.sensorFaehig` gebunden (aktuell nur Zuckerhydra), reguläre Familien laufen immer über die manuelle Tap-UI. Die 5 Stufen sind Getränke-Gebinde mit wachsender Größe: Tiny Soda (0,25L Dose) → Big Soda (0,5L Dose) → Mighty Soda (1L Flasche) → High and Mighty Soda (1,5L Flasche) → Gallon Soda (1-Gallonen-Kanister mit Henkel), mit wachsender Sprudel-Blasenzahl pro Stufe als Zusatz-Eskalation.
 
-Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Creature: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe; Pastatoren/Sodas: komplett andere Silhouette pro Stufe statt nur Farbe/Größe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi, Pastatoren und Sodas noch leer, der User schreibt eigene.
+**Gummibären (10. Familie, Ergänzung 2026-09-07, komplett User-Idee):** Übung "Cossack Squat", Bonus-Stat kraft, Standard-Progression 5→10→20→50→100. Die 5 Stufen sind klassische Gummibär-Silhouetten (Kopf+2 Ohren, Birnenkörper, Stummelarme/-beine, Glanzlicht) in Süßwaren-Farbeskalation Gelb→Orange→Rot: Gummibärchen → Gummibär → Gummibär Gigant → Gummibär Patriarch (+ Krone/Schnauzer) → Gummibär Matriarch (+ Schleife/Wimpern).
 
-**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats, Hampelmänner, Crab Walks, Leg Raises, Split Squats, Wadenheben) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahmen:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50), Standing Arnold Press startet bei 10 statt 5 und geht bis 200 (10 → 20 → 40 → 100 → 200), Auf-der-Stelle-Springen startet ebenfalls bei 10, ist aber bei 100 gedeckelt (10 → 20 → 50 → 75 → 100, siehe Pastatoren-Notiz oben). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
+Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Creature: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe; Pastatoren/Sodas/Gummibären: komplett andere Silhouette oder eigene Accessoires pro Stufe statt nur Farbe/Größe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi, Pastatoren, Sodas und Gummibären noch leer, der User schreibt eigene.
+
+**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats, Hampelmänner, Crab Walks, Leg Raises, Split Squats, Wadenheben, Cossack Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahmen:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50), Standing Arnold Press startet bei 10 statt 5 und geht bis 200 (10 → 20 → 40 → 100 → 200), Auf-der-Stelle-Springen startet ebenfalls bei 10, ist aber bei 100 gedeckelt (10 → 20 → 50 → 75 → 100, siehe Pastatoren-Notiz oben). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
 ### 5.3 Einzigartige Bosse mit Cooldowns
 
