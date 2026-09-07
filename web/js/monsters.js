@@ -21,6 +21,17 @@ const WoFMonsters = (() => {
   // (User-Korrektur: "Leute sollen ja net drei Minuten stehen, bevor der
   // Mob gekillt ist") — Stufe 4/5 füllen die Lücke bis 100 auf.
   const JUMPING_PROGRESSION = [10, 20, 50, 75, 100];
+  // Cossack Squats für Gummibären (User-Korrektur: die Standard-Progression
+  // passt nicht, weil pro Rep abwechselnd eine Seite belastet wird — "5 pro
+  // Seite" bei Stufe 1 bis "25 pro Seite" beim größten Bären). Linear statt
+  // superlinear, weil die Übung pro Wiederholung deutlich anstrengender ist
+  // als eine normale Kniebeuge.
+  const COSSACK_PROGRESSION = [5, 10, 15, 20, 25];
+  // Split Squats für Plumpi (gleiche Logik wie Cossack Squats — auch eine
+  // Ausfallschritt-Übung pro Seite, User-Korrektur nachdem aufgefallen ist,
+  // dass hier noch die Standard-Progression mit 100 am Ende lief): "50 pro
+  // Seite" am Ende statt 100.
+  const SPLIT_SQUAT_PROGRESSION = [10, 20, 30, 40, 50];
 
   // Eigene Annahme (im HANDOVER nicht spezifiziert): Basiswerte pro Stufe,
   // gleich über alle Familien — Belohnung hängt an der Monster-Stufe
@@ -126,14 +137,14 @@ const WoFMonsters = (() => {
     plumpi: {
       id: 'plumpi',
       name: 'Plumpi',
-      uebung: 'Split Squats',
+      uebung: 'Split Squats (pro Seite)',
       einheit: 'reps',
       bonusStat: 'kraft',
       sprueche: [],
       stufen: baueStufen(
-        'plumpi', 'Split Squats', 'kraft',
+        'plumpi', 'Split Squats (pro Seite)', 'kraft',
         ['Plumpi', 'Superplumpi', 'Ultraplumpi', 'Megaplumpi', 'Hyperplumpi'],
-        STANDARD_PROGRESSION
+        SPLIT_SQUAT_PROGRESSION
       ),
     },
     pastatoren: {
@@ -165,14 +176,14 @@ const WoFMonsters = (() => {
     gummibaeren: {
       id: 'gummibaeren',
       name: 'Gummibären',
-      uebung: 'Cossack Squat',
+      uebung: 'Cossack Squat (pro Seite)',
       einheit: 'reps',
       bonusStat: 'kraft',
       sprueche: [],
       stufen: baueStufen(
-        'gummibaeren', 'Cossack Squat', 'kraft',
+        'gummibaeren', 'Cossack Squat (pro Seite)', 'kraft',
         ['Gummibärchen', 'Gummibär', 'Gummibär Gigant', 'Gummibär Patriarch', 'Gummibär Matriarch'],
-        STANDARD_PROGRESSION
+        COSSACK_PROGRESSION
       ),
     },
   };

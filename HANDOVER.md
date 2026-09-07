@@ -147,10 +147,10 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 | Creature (intern weiterhin familyId `creatures`) | Crab Walks | ausdauer |
 | Killer Kebab Snakes | Leg Raises | beweglichkeit |
 | Knödel | Standing Arnold Press | willenskraft |
-| Plumpi | Split Squats | kraft |
+| Plumpi | Split Squats (pro Seite) | kraft |
 | Pastatoren | Auf der Stelle springen | ausdauer |
 | Sodas | Wadenheben | ausdauer |
-| Gummibären | Cossack Squat | kraft |
+| Gummibären | Cossack Squat (pro Seite) | kraft |
 
 **Übungen-Update (2026-09-06):** Auf User-Rückmeldung ("die Übungen sind blöd... wir brauchen Übungen, die man überall ausführen kann") wurden Sit-Ups, Burpees und Russian Twists ersetzt — alles Übungen, die Bodenkontakt/Hinlegen brauchen und für unterwegs unpraktisch sind. Standing Arnold Press hat eine eigene Rep-Progression (10→20→40→100→200 statt Standard 5→10→20→50→100, User-Vorgabe "10 in der ersten Stufe").
 
@@ -160,11 +160,13 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 **Sodas (9. Familie, Ergänzung 2026-09-06, komplett User-Idee):** Übung "Wadenheben" (Standard-Progression 5→10→20→50→100, gleicher Deckel-Gedanke wie bei Pastatoren). User fragte, ob der Bewegungssensor (`sensor.js`) Wadenheben erkennen könnte — Antwort: irrelevant, der Sensor-Modus ist laut `combat.js` (`istSensorFaehig()`) exklusiv an Boss-Kämpfe mit `boss.sensorFaehig` gebunden (aktuell nur Zuckerhydra), reguläre Familien laufen immer über die manuelle Tap-UI. Die 5 Stufen sind Getränke-Gebinde mit wachsender Größe: Tiny Soda (0,25L Dose) → Big Soda (0,5L Dose) → Mighty Soda (1L Flasche) → High and Mighty Soda (1,5L Flasche) → Gallon Soda (1-Gallonen-Kanister mit Henkel), mit wachsender Sprudel-Blasenzahl pro Stufe als Zusatz-Eskalation.
 
-**Gummibären (10. Familie, Ergänzung 2026-09-07, komplett User-Idee):** Übung "Cossack Squat", Bonus-Stat kraft, Standard-Progression 5→10→20→50→100. Die 5 Stufen sind klassische Gummibär-Silhouetten (Kopf+2 Ohren, Birnenkörper, Stummelarme/-beine, Glanzlicht) in Süßwaren-Farbeskalation Gelb→Orange→Rot: Gummibärchen → Gummibär → Gummibär Gigant → Gummibär Patriarch (+ Krone/Schnauzer) → Gummibär Matriarch (+ Schleife/Wimpern).
+**Gummibären (10. Familie, Ergänzung 2026-09-07, komplett User-Idee):** Übung "Cossack Squat (pro Seite)", Bonus-Stat kraft. Die 5 Stufen sind klassische Gummibär-Silhouetten (Kopf+2 Ohren, Birnenkörper, Stummelarme/-beine, Glanzlicht) in Süßwaren-Farbeskalation Gelb→Orange→Rot: Gummibärchen → Gummibär → Gummibär Gigant → Gummibär Patriarch (+ Krone/Schnauzer) → Gummibär Matriarch (+ Schleife/Wimpern).
+
+**Progression-Korrektur (2026-09-07):** Cossack Squats und Split Squats (Plumpi) sind beide Ausfallschritt-Übungen, bei denen abwechselnd eine Seite belastet wird — die Standard-Progression (endet bei 100) war hier zu hoch angesetzt. User-Vorgabe: Cossack Squat 5→10→15→20→25 pro Seite (linear statt superlinear, `COSSACK_PROGRESSION`), Split Squats 10→20→30→40→50 pro Seite (`SPLIT_SQUAT_PROGRESSION`). Beide Übungsnamen tragen jetzt den Zusatz "(pro Seite)" in der UI, damit klar ist, dass die Zahl sich auf eine Beinseite bezieht, nicht auf die Gesamtzahl der Wiederholungen.
 
 Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Creature: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe; Pastatoren/Sodas/Gummibären: komplett andere Silhouette oder eigene Accessoires pro Stufe statt nur Farbe/Größe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi, Pastatoren, Sodas und Gummibären noch leer, der User schreibt eigene.
 
-**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats, Hampelmänner, Crab Walks, Leg Raises, Split Squats, Wadenheben, Cossack Squats) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahmen:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50), Standing Arnold Press startet bei 10 statt 5 und geht bis 200 (10 → 20 → 40 → 100 → 200), Auf-der-Stelle-Springen startet ebenfalls bei 10, ist aber bei 100 gedeckelt (10 → 20 → 50 → 75 → 100, siehe Pastatoren-Notiz oben). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
+**Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats, Hampelmänner, Crab Walks, Leg Raises, Wadenheben) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahmen:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50), Standing Arnold Press startet bei 10 statt 5 und geht bis 200 (10 → 20 → 40 → 100 → 200), Auf-der-Stelle-Springen startet ebenfalls bei 10, ist aber bei 100 gedeckelt (10 → 20 → 50 → 75 → 100, siehe Pastatoren-Notiz oben). Split Squats und Cossack Squats laufen linear pro Seite (10→20→30→40→50 bzw. 5→10→15→20→25, siehe Progression-Korrektur oben). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
 ### 5.3 Einzigartige Bosse mit Cooldowns
 
