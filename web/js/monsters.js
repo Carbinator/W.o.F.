@@ -1,7 +1,7 @@
 /**
  * monsters.js — Monster-Familien-System (Punkt 5.1/5.2 aus HANDOVER.md)
  *
- * 9 Familien: Squat Goblin, Pusher Demon, Dumplings, Burger, Killer
+ * 9 Familien: Squat Goblin, Pusher Demon, Dumplings, Creature, Killer
  * Kebab Snakes, Knödel, Plumpi, Pastatoren, Sodas. Übungen sind auf User-Wunsch (2026-09-06)
  * durchgehend auf "überall ausführbar" umgestellt — keine Boden-/
  * Liege-Übungen mehr außer Liegestütze. Klimmzüge bleiben draußen,
@@ -86,7 +86,7 @@ const WoFMonsters = (() => {
     },
     creatures: {
       id: 'creatures',
-      name: 'Burger',
+      name: 'Creature',
       uebung: 'Crab Walks',
       einheit: 'reps',
       bonusStat: 'ausdauer',

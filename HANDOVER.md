@@ -137,14 +137,14 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 ### 5.2 Häufig-Spawner-Familien
 
-**✅ Umgesetzt, 9 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde auf User-Wunsch zu "Burger" umbenannt/umgestaltet, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
+**✅ Umgesetzt, 9 Familien** (Stand nach mehreren Iterationen — "Creatures" wurde zwischenzeitlich zu "Burger" umbenannt/umgestaltet, dann auf User-Wunsch 2026-09-07 zurück zu "Creature" umbenannt, die alte Kreatur lebt separat als "Plumpi" weiter, siehe `monsters.js`):
 
 | Familie | Übung | Bonus-Stat |
 |---|---|---|
 | Squat Goblin | Kniebeugen | muskelaufbau |
 | Pusher Demon | Liegestütze | kraft |
 | Dumplings | Hampelmänner | muskelaufbau |
-| Burger (intern weiterhin familyId `creatures`) | Crab Walks | ausdauer |
+| Creature (intern weiterhin familyId `creatures`) | Crab Walks | ausdauer |
 | Killer Kebab Snakes | Leg Raises | beweglichkeit |
 | Knödel | Standing Arnold Press | willenskraft |
 | Plumpi | Split Squats | kraft |
@@ -159,7 +159,7 @@ Konkrete Skilltree-Inhalte kann Claude Code selbst entwerfen (Vorschlag: 3 Theme
 
 **Sodas (9. Familie, Ergänzung 2026-09-06, komplett User-Idee):** Übung "Wadenheben" (Standard-Progression 5→10→20→50→100, gleicher Deckel-Gedanke wie bei Pastatoren). User fragte, ob der Bewegungssensor (`sensor.js`) Wadenheben erkennen könnte — Antwort: irrelevant, der Sensor-Modus ist laut `combat.js` (`istSensorFaehig()`) exklusiv an Boss-Kämpfe mit `boss.sensorFaehig` gebunden (aktuell nur Zuckerhydra), reguläre Familien laufen immer über die manuelle Tap-UI. Die 5 Stufen sind Getränke-Gebinde mit wachsender Größe: Tiny Soda (0,25L Dose) → Big Soda (0,5L Dose) → Mighty Soda (1L Flasche) → High and Mighty Soda (1,5L Flasche) → Gallon Soda (1-Gallonen-Kanister mit Henkel), mit wachsender Sprudel-Blasenzahl pro Stufe als Zusatz-Eskalation.
 
-Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Burger: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe; Pastatoren/Sodas: komplett andere Silhouette pro Stufe statt nur Farbe/Größe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi, Pastatoren und Sodas noch leer, der User schreibt eigene.
+Jede Familie hat 5 Stufen mit eigenem Hand-SVG-Design, das mit der Stufe wächst/eskaliert (z.B. Squat Goblin: Hellgrün→Grün→Dunkelgrün→Grün/Rot→Rot; Creature: mehr Patties+Käse pro Stufe, krabbenartig mit 8 Gliedmaßen; Knödel: eine Kugel mehr pro Stufe; Pastatoren/Sodas: komplett andere Silhouette pro Stufe statt nur Farbe/Größe). Jede Familie hat außerdem 2 rotierende Kampfsprüche, die beim Kampfstart zufällig gezogen werden (siehe 6.6) — bei Plumpi, Pastatoren und Sodas noch leer, der User schreibt eigene.
 
 **Rep-Progression:** 5 → 10 → 20 → 50 → 100 (Squats, Hampelmänner, Crab Walks, Leg Raises, Split Squats, Wadenheben) oder ähnlich, jeweils angepasst an Übungsart. **Ausnahmen:** Push-Ups skalieren schwerer (5 → 10 → 20 → 35 → 50), Standing Arnold Press startet bei 10 statt 5 und geht bis 200 (10 → 20 → 40 → 100 → 200), Auf-der-Stelle-Springen startet ebenfalls bei 10, ist aber bei 100 gedeckelt (10 → 20 → 50 → 75 → 100, siehe Pastatoren-Notiz oben). **Zeit-basierte Übungen** (Plank): in Sekunden statt Reps.
 
@@ -295,6 +295,8 @@ Jede Monster-Familie (2 rotierende Sprüche) und jeder Boss (1 Spruch) hat einen
 **Wichtig für die Weiterarbeit:** Die aktuellen Sprüche sind nur Platzhalter von Claude. Der User schreibt sich die finalen Sprüche (und ggf. auch Namen) selbst — nicht einfach durch neue KI-Vorschläge ersetzen, sondern auf seine Vorgaben warten.
 
 **Update 2026-09-06:** Die 5 Stufennamen von 6 der 7 Familien (Squat Goblin, Pusher Demon, Dumplings, Burger/"Creature", Killer Kebab Snakes, Knödel) wurden auf User-Vorgabe komplett durch eigene Namen ersetzt (`monsters.js`, `stufen`-Arrays). Plumpi hatte seine Namen (Plumpi/Super-/Ultra-/Mega-/Hyperplumpi) schon vorher vom User. Die Familien-IDs/-Anzeigenamen/Übungen/Sprüche blieben unverändert — nur die einzelnen Stufennamen. Gleiches Prinzip wie bei den Sprüchen: nicht durch KI-Vorschläge ersetzen.
+
+**Update 2026-09-07:** Der Anzeigename der `creatures`-Familie wurde auf User-Wunsch von "Burger" zurück zu "Creature" geändert (`monsters.js`, Feld `name`) — die Stufennamen (Creature, Creature Rare, ...) hießen intern schon vorher so, nur das übergeordnete Familien-Label hinkte noch hinterher. Die beiden Sprüche referenzieren noch "Burger"/"Cheeseburger" (`sprueche`-Feld) — bewusst NICHT mit-geändert, da das Claude-Platzhalter sind und der User seine Sprüche laut 6.6 selbst schreibt.
 
 ## 7. Karten-System
 
